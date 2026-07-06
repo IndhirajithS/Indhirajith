@@ -1,5 +1,10 @@
-package repository;
+package com.example.demo.repository;
 
-public class AuditLogRepository {
-    
+import com.example.demo.entity.AuditLog;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
+    List<AuditLog> findByTargetEntityAndTargetIdOrderByPerformedAtDesc(String targetEntity, Long targetId);
+    List<AuditLog> findTop50ByOrderByPerformedAtDesc();
 }

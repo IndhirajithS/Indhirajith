@@ -1,5 +1,10 @@
-package repository;
+package com.example.demo.repository;
 
-public class DocumentRepository {
-    
+import com.example.demo.entity.Document;
+import com.example.demo.entity.Workspace;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface DocumentRepository extends JpaRepository<Document, Long> {
+    List<Document> findByWorkspace(Workspace workspace);
 }
