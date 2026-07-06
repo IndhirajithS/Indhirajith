@@ -1,5 +1,15 @@
-package entity;
+package com.example.demo.entity;
 
-public class AuditActionType {
-    
+public enum AuditActionType {
+    WORKSPACE_CREATED,
+    WORKSPACE_ARCHIVED,
+    MEMBER_ADDED,
+    DOCUMENT_CREATED,
+    DOCUMENT_ARCHIVED,
+    VERSION_SAVED,
+    VERSION_SUBMITTED,
+    VERSION_RETRACTED,
+    REVIEW_OPENED,
+    REVIEW_DECIDED,
+    REVIEW_ESCALATED
 }

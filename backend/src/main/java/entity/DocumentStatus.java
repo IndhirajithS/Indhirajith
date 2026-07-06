@@ -1,5 +1,9 @@
-package entity;
+package com.example.demo.entity;
 
-public class DocumentStatus {
-    
+public enum DocumentStatus {
+    DRAFT,
+    IN_REVIEW,
+    APPROVED,
+    REJECTED,
+    ARCHIVED
 }

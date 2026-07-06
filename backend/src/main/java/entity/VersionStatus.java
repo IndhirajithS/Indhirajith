@@ -1,5 +1,8 @@
-package entity;
+package com.example.demo.entity;
 
-public class VersionStatus {
-    
+public enum VersionStatus {
+    DRAFT,
+    SUBMITTED,
+    APPROVED,
+    REJECTED
 }
