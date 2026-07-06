@@ -1,4 +1,4 @@
-﻿package com.example.demo.controller;
+package com.example.demo.controller;
 
 import com.example.demo.dto.MemberInviteDto;
 import com.example.demo.dto.WorkspaceRequestDto;
@@ -32,7 +32,7 @@ public class WorkspaceController {
     public ResponseEntity<List<WorkspaceResponseDto>> getAllActiveWorkspaces() {
         List<WorkspaceResponseDto> list = workspaceService.getActiveWorkspaces().stream()
                 .map(this::convertToDto)
-                .collect(Collectors.stream());
+                .collect(Collectors.toList());
         return ResponseEntity.ok(list);
     }
 
