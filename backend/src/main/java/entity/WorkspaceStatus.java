@@ -1,5 +1,6 @@
-package entity;
+package com.example.demo.entity;
 
-public class WorkspaceStatus {
-    
+public enum WorkspaceStatus {
+    ACTIVE,
+    ARCHIVED
 }

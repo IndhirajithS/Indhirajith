@@ -1,5 +1,7 @@
-package entity;
+package com.example.demo.entity;
 
-public class MemberRole {
-    
+public enum MemberRole {
+    CREATOR,
+    REVIEWER,
+    OBSERVER
 }
