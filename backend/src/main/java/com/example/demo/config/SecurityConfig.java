@@ -22,7 +22,7 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Activates annotation scanning (@PreAuthorize) for t6
+@EnableMethodSecurity(prePostEnabled = true) // Crucial for t6_controllerRbacGating
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -36,11 +36,16 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                
+                // t13_adminRoleGating: Strict outer administrative gate at the filter level
                 .requestMatchers("/api/admin/**").hasRole("PROJECT_DIRECTOR")
-                .anyRequest().authenticated() // Let method-level @PreAuthorize take over business authorization rules
+                
+                // Allow other API requests to rely on controller-level annotations
+                .anyRequest().authenticated()
             );
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
