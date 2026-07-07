@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.MemberInviteDto;
 import com.example.demo.dto.WorkspaceRequestDto;
 import com.example.demo.dto.WorkspaceResponseDto;
+import com.example.demo.entity.Workspace;
 import com.example.demo.exception.BusinessValidationException;
 import com.example.demo.service.WorkspaceService;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/workspaces")
@@ -22,15 +24,19 @@ public class WorkspaceController {
 
     @PostMapping
     public ResponseEntity<WorkspaceResponseDto> create(@RequestBody @Valid WorkspaceRequestDto dto, Principal principal) {
-        WorkspaceResponseDto resDto = workspaceService.createWorkspace(dto, principal.getName());
-        return ResponseEntity.ok(resDto);
+        // Fix: Service expects the request DTO and returns the entity model
+        Workspace w = workspaceService.createWorkspace(dto, principal.getName());
+        return ResponseEntity.ok(convertToDto(w));
     }
 
     // t7_getAllMethodMapping & t6_controllerRbacGating
     @GetMapping
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
     public ResponseEntity<List<WorkspaceResponseDto>> getAllActiveWorkspaces() {
-        List<WorkspaceResponseDto> list = workspaceService.getActiveWorkspaces();
+        // Fix: Method gets all active workspace entities and streams them into response DTO lists
+        List<WorkspaceResponseDto> list = workspaceService.getActiveWorkspaces().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(list);
     }
 
@@ -39,8 +45,8 @@ public class WorkspaceController {
         if (id == null || id <= 0) {
             throw new BusinessValidationException("Invalid workspace ID provided");
         }
-        WorkspaceResponseDto resDto = workspaceService.getById(id);
-        return ResponseEntity.ok(resDto);
+        Workspace w = workspaceService.getById(id);
+        return ResponseEntity.ok(convertToDto(w));
     }
 
     // t10_updateMethodMapping
@@ -50,8 +56,9 @@ public class WorkspaceController {
         if (id == null || id <= 0) {
             throw new BusinessValidationException("Invalid workspace ID provided");
         }
-        WorkspaceResponseDto resDto = workspaceService.updateWorkspace(id, dto, principal.getName());
-        return ResponseEntity.ok(resDto);
+        // Fix: Service expects update parameters and returns updated Workspace entity
+        Workspace w = workspaceService.updateWorkspace(id, dto, principal.getName());
+        return ResponseEntity.ok(convertToDto(w));
     }
 
     @PostMapping("/{id}/members")
@@ -69,7 +76,19 @@ public class WorkspaceController {
         if (id == null || id <= 0) {
             throw new BusinessValidationException("Invalid workspace ID provided");
         }
+        // Fix: Matches the business archive service invocation mapping exactly
         workspaceService.archiveWorkspace(id, principal.getName());
         return ResponseEntity.noContent().build();
+    }
+
+    // Maps the Workspace entity cleanly to WorkspaceResponseDto to eliminate method errors
+    private WorkspaceResponseDto convertToDto(Workspace w) {
+        WorkspaceResponseDto res = new WorkspaceResponseDto();
+        res.setId(w.getId());
+        res.setName(w.getName());
+        res.setCapacityLimit(w.getCapacityLimit());
+        res.setOwnerUsername(w.getOwner().getUsername());
+        res.setStatus(w.getStatus().name());
+        return res;
     }
 }
