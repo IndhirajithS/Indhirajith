@@ -22,7 +22,7 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Enforces t6_controllerRbacGating
+@EnableMethodSecurity(prePostEnabled = true) // Activates controller-level RBAC gating (t6)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -31,30 +31,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Handle Cross-Origin Resource Sharing
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            
-            // Disable CSRF since tokens are stateless
             .csrf(csrf -> csrf.disable())
-            
-            // Stateless session tracking
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            
             .authorizeHttpRequests(auth -> auth
-                // Allow anyone to access authentication routes
                 .requestMatchers("/api/auth/**").permitAll()
-                
-                // t13_adminRoleGating: Strict outer administrative gate at the filter level
-                .requestMatchers("/api/admin/**").hasRole("PROJECT_DIRECTOR")
-                
-                // Allow all other /api endpoints to pass to the controller layer 
-                // where @PreAuthorize checks can be tested and evaluated cleanly.
-                .anyRequest().authenticated()
+                .requestMatchers("/api/admin/**").hasRole("PROJECT_DIRECTOR") // Global administrative wall (t13)
+                .anyRequest().authenticated() // Allows all other endpoints to be evaluated by Controller RBAC annotations
             );
 
-        // Inject the custom JWT filter into the filter sequence
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
