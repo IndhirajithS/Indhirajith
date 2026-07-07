@@ -6,7 +6,7 @@ import com.example.demo.dto.RegisterDto;
 import com.example.demo.entity.SystemUser;
 import com.example.demo.exception.BusinessValidationException;
 import com.example.demo.repository.SystemUserRepository;
-import com.example.demo.config.JwtTokenProvider;
+import com.example.demo.config.SecurityConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
