@@ -32,7 +32,7 @@ public class WorkspaceController {
     public ResponseEntity<List<WorkspaceResponseDto>> getAllActiveWorkspaces() {
         List<WorkspaceResponseDto> list = workspaceService.getActiveWorkspaces().stream()
                 .map(this::convertToDto)
-                .collect(Collectors.stream());
+                .collect(Collectors.toList()); // Fixed here: changed from .stream() to .toList()
         return ResponseEntity.ok(list);
     }
 
