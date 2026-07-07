@@ -6,7 +6,6 @@ import com.example.demo.dto.RegisterDto;
 import com.example.demo.entity.SystemUser;
 import com.example.demo.exception.BusinessValidationException;
 import com.example.demo.repository.SystemUserRepository;
-import com.example.demo.config.JwtTokenProvider; // FIX: Added the missing cross-package import
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,7 +20,7 @@ import java.util.List;
 public class AuthService {
     private final SystemUserRepository systemUserRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtService jwtService; // FIXED: Changed from JwtTokenProvider to JwtService
     private final AuthenticationManager authenticationManager;
 
     @Transactional
@@ -42,7 +41,9 @@ public class AuthService {
                 .build();
 
         systemUserRepository.save(user);
-        String token = jwtTokenProvider.generateToken(user.getUsername(), user.getRole().name());
+        
+        // FIXED: Using jwtService here
+        String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
         return new AuthResponseDto(token, user.getUsername(), user.getRole().name());
     }
 
@@ -53,7 +54,8 @@ public class AuthService {
         SystemUser user = systemUserRepository.findByUsername(dto.getUsername())
                 .orElseThrow(() -> new BusinessValidationException("Invalid username or password"));
         
-        String token = jwtTokenProvider.generateToken(user.getUsername(), user.getRole().name());
+        // FIXED: Using jwtService here
+        String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
         return new AuthResponseDto(token, user.getUsername(), user.getRole().name());
     }
 
