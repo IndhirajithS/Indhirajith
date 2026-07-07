@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import com.example.demo.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +20,8 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    // Correct injection to match your JwtService bean
+    private final JwtService jwtService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, 
@@ -31,13 +33,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             
-            if (jwtTokenProvider.validateToken(token)) {
-                String username = jwtTokenProvider.getUsername(token);
-                String role = jwtTokenProvider.getRole(token); // e.g., "PROJECT_DIRECTOR"
+            // Call validation and claim extraction methods on your existing JwtService
+            if (jwtService.validateToken(token)) {
+                String username = jwtService.getUsername(token);
+                String role = jwtService.getRole(token); // extracts the naked role string from payload
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    // CRITICAL FIX FOR RBAC GATING: 
-                    // Add the "ROLE_" prefix here so Spring's hasRole() can recognize it properly.
+                    // Ensures Spring Security matches the role correctly during @PreAuthorize checks
                     String formattedRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority(formattedRole);
 
