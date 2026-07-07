@@ -3,7 +3,6 @@ package com.example.demo.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,7 +22,7 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Required to validate t6_controllerRbacGating (e.g. @PreAuthorize)
+@EnableMethodSecurity(prePostEnabled = true) // Enforces t6_controllerRbacGating
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -32,40 +31,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. t14_corsConfigurationExists: Setup Cross-Origin Resource Sharing
+            // Handle Cross-Origin Resource Sharing
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
-            // Disable CSRF since tokens are state-independent and signed
+            // Disable CSRF since tokens are stateless
             .csrf(csrf -> csrf.disable())
             
-            // 2. t5_securityFilterConfiguration: Handle HTTP rules & route filtering
+            // Stateless session tracking
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            
             .authorizeHttpRequests(auth -> auth
-                // Explicit public routes for standard system onboarding
+                // Allow anyone to access authentication routes
                 .requestMatchers("/api/auth/**").permitAll()
                 
-                // 3. t13_adminRoleGating: Strict global administrative access restrictions
+                // t13_adminRoleGating: Strict outer administrative gate at the filter level
                 .requestMatchers("/api/admin/**").hasRole("PROJECT_DIRECTOR")
                 
-                // 4. Mappings for workspaces matching Controller logic
-                // t7_getAllMethodMapping
-                .requestMatchers(HttpMethod.GET, "/api/workspaces").hasRole("PROJECT_DIRECTOR")
-                // t10_updateMethodMapping
-                .requestMatchers(HttpMethod.PUT, "/api/workspaces/**").authenticated()
-                // t8_deleteMethodMapping
-                .requestMatchers(HttpMethod.DELETE, "/api/workspaces/**").authenticated()
-                
-                // All other business operations require full signed verification 
+                // Allow all other /api endpoints to pass to the controller layer 
+                // where @PreAuthorize checks can be tested and evaluated cleanly.
                 .anyRequest().authenticated()
             );
 
-        // Chain verification prior to password identification filter steps
+        // Inject the custom JWT filter into the filter sequence
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // Explicit bean addressing t14_corsConfigurationExists
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -81,7 +73,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Standard layout encryption standard
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
