@@ -20,7 +20,6 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    // Correct injection to match your JwtService bean
     private final JwtService jwtService;
 
     @Override
@@ -33,13 +32,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             
-            // Call validation and claim extraction methods on your existing JwtService
             if (jwtService.validateToken(token)) {
                 String username = jwtService.getUsername(token);
-                String role = jwtService.getRole(token); // extracts the naked role string from payload
+                String role = jwtService.getRole(token);
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    // Ensures Spring Security matches the role correctly during @PreAuthorize checks
+                    // Ensures that when the user is authenticated, the role has the ROLE_ prefix required by hasRole()
                     String formattedRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority(formattedRole);
 

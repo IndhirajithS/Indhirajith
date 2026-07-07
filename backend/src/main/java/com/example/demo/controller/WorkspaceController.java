@@ -1,78 +1,75 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.MemberInviteDto;
 import com.example.demo.dto.WorkspaceRequestDto;
 import com.example.demo.dto.WorkspaceResponseDto;
-import com.example.demo.dto.WorkspaceSummaryDto;
-import com.example.demo.dto.MemberInviteDto;
+import com.example.demo.exception.BusinessValidationException;
 import com.example.demo.service.WorkspaceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
+import java.security.Principal;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/workspaces")
 @RequiredArgsConstructor
 public class WorkspaceController {
-
     private final WorkspaceService workspaceService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR')")
-    public ResponseEntity<WorkspaceResponseDto> createWorkspace(@Valid @RequestBody WorkspaceRequestDto dto) {
-        WorkspaceResponseDto createdWorkspace = workspaceService.createWorkspace(dto);
-        return new ResponseEntity<>(createdWorkspace, HttpStatus.CREATED);
+    public ResponseEntity<WorkspaceResponseDto> create(@RequestBody @Valid WorkspaceRequestDto dto, Principal principal) {
+        WorkspaceResponseDto resDto = workspaceService.createWorkspace(dto, principal.getName());
+        return ResponseEntity.ok(resDto);
     }
 
-    // t7_getAllMethodMapping
+    // t7_getAllMethodMapping & t6_controllerRbacGating
     @GetMapping
-    public ResponseEntity<List<WorkspaceSummaryDto>> getAllWorkspaces() {
-        List<WorkspaceSummaryDto> workspaces = workspaceService.getAllWorkspaces();
-        return ResponseEntity.ok(workspaces);
+    @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
+    public ResponseEntity<List<WorkspaceResponseDto>> getAllActiveWorkspaces() {
+        List<WorkspaceResponseDto> list = workspaceService.getActiveWorkspaces();
+        return ResponseEntity.ok(list);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<WorkspaceResponseDto> getWorkspaceById(@PathVariable Long id) {
-        WorkspaceResponseDto workspace = workspaceService.getWorkspaceById(id);
-        return ResponseEntity.ok(workspace);
+    public ResponseEntity<WorkspaceResponseDto> getById(@PathVariable("id") Long id) {
+        if (id == null || id <= 0) {
+            throw new BusinessValidationException("Invalid workspace ID provided");
+        }
+        WorkspaceResponseDto resDto = workspaceService.getById(id);
+        return ResponseEntity.ok(resDto);
     }
 
     // t10_updateMethodMapping
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<WorkspaceResponseDto> updateWorkspace(
-            @PathVariable Long id, 
-            @Valid @RequestBody WorkspaceRequestDto dto) {
-        WorkspaceResponseDto updatedWorkspace = workspaceService.updateWorkspace(id, dto);
-        return ResponseEntity.ok(updatedWorkspace);
+    public ResponseEntity<WorkspaceResponseDto> update(@PathVariable("id") Long id, @RequestBody @Valid WorkspaceRequestDto dto, Principal principal) {
+        if (id == null || id <= 0) {
+            throw new BusinessValidationException("Invalid workspace ID provided");
+        }
+        WorkspaceResponseDto resDto = workspaceService.updateWorkspace(id, dto, principal.getName());
+        return ResponseEntity.ok(resDto);
+    }
+
+    @PostMapping("/{id}/members")
+    public ResponseEntity<Void> inviteMember(@PathVariable("id") Long id, @RequestBody @Valid MemberInviteDto dto, Principal principal) {
+        if (id == null || id <= 0) {
+            throw new BusinessValidationException("Invalid workspace ID provided");
+        }
+        workspaceService.inviteMember(id, dto, principal.getName());
+        return ResponseEntity.ok().build();
     }
 
     // t8_deleteMethodMapping
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<Void> deleteWorkspace(@PathVariable Long id) {
-        workspaceService.deleteWorkspace(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    // t6_controllerRbacGating
-    @PostMapping("/{id}/members")
-    @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR')")
-    public ResponseEntity<Void> inviteMember(
-            @PathVariable Long id, 
-            @Valid @RequestBody MemberInviteDto dto) {
-        workspaceService.inviteMember(id, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    @DeleteMapping("/{id}/members/{userId}")
-    @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<Void> removeMember(@PathVariable Long id, @PathVariable Long userId) {
-        workspaceService.removeMember(id, userId);
+    public ResponseEntity<Void> archive(@PathVariable("id") Long id, Principal principal) {
+        if (id == null || id <= 0) {
+            throw new BusinessValidationException("Invalid workspace ID provided");
+        }
+        workspaceService.archiveWorkspace(id, principal.getName());
         return ResponseEntity.noContent().build();
     }
 }
