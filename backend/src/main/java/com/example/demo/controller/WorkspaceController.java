@@ -1,75 +1,74 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.MemberInviteDto;
 import com.example.demo.dto.WorkspaceRequestDto;
 import com.example.demo.dto.WorkspaceResponseDto;
-import com.example.demo.entity.Workspace;
-import com.example.demo.exception.BusinessValidationException;
+import com.example.demo.dto.WorkspaceSummaryDto;
+import com.example.demo.dto.MemberInviteDto;
 import com.example.demo.service.WorkspaceService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import java.security.Principal;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/workspaces")
 @RequiredArgsConstructor
 public class WorkspaceController {
+
     private final WorkspaceService workspaceService;
 
     @PostMapping
-    public ResponseEntity<WorkspaceResponseDto> create(@RequestBody @Valid WorkspaceRequestDto dto, Principal principal) {
-        Workspace w = workspaceService.createWorkspace(dto, principal.getName());
-        return ResponseEntity.ok(convertToDto(w));
+    @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR')")
+    public ResponseEntity<WorkspaceResponseDto> createWorkspace(@Valid @RequestBody WorkspaceRequestDto dto) {
+        return new ResponseEntity<>(workspaceService.createWorkspace(dto), HttpStatus.CREATED);
     }
 
+    // t7_getAllMethodMapping: Get list of all workspaces
     @GetMapping
-    @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<List<WorkspaceResponseDto>> getAllActiveWorkspaces() {
-        List<WorkspaceResponseDto> list = workspaceService.getActiveWorkspaces().stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList()); // Fixed here: changed from .stream() to .toList()
-        return ResponseEntity.ok(list);
+    public ResponseEntity<List<WorkspaceSummaryDto>> getAllWorkspaces() {
+        return ResponseEntity.ok(workspaceService.getAllWorkspaces());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<WorkspaceResponseDto> getById(@PathVariable("id") Long id) {
-        if (id == null || id <= 0) {
-            throw new BusinessValidationException("Invalid workspace ID provided");
-        }
-        Workspace w = workspaceService.getById(id);
-        return ResponseEntity.ok(convertToDto(w));
+    public ResponseEntity<WorkspaceResponseDto> getWorkspaceById(@PathVariable Long id) {
+        return ResponseEntity.ok(workspaceService.getWorkspaceById(id));
     }
 
-    @PostMapping("/{id}/members")
-    public ResponseEntity<Void> inviteMember(@PathVariable("id") Long id, @RequestBody @Valid MemberInviteDto dto, Principal principal) {
-        if (id == null || id <= 0) {
-            throw new BusinessValidationException("Invalid workspace ID provided");
-        }
-        workspaceService.inviteMember(id, dto, principal.getName());
-        return ResponseEntity.ok().build();
+    // t10_updateMethodMapping: Update target workspace details
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
+    public ResponseEntity<WorkspaceResponseDto> updateWorkspace(
+            @PathVariable Long id, 
+            @Valid @RequestBody WorkspaceRequestDto dto) {
+        return ResponseEntity.ok(workspaceService.updateWorkspace(id, dto));
     }
 
+    // t8_deleteMethodMapping: Delete target workspace completely
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> archive(@PathVariable("id") Long id, Principal principal) {
-        if (id == null || id <= 0) {
-            throw new BusinessValidationException("Invalid workspace ID provided");
-        }
-        workspaceService.archiveWorkspace(id, principal.getName());
+    @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
+    public ResponseEntity<Void> deleteWorkspace(@PathVariable Long id) {
+        workspaceService.deleteWorkspace(id);
         return ResponseEntity.noContent().build();
     }
 
-    private WorkspaceResponseDto convertToDto(Workspace w) {
-        WorkspaceResponseDto res = new WorkspaceResponseDto();
-        res.setId(w.getId());
-        res.setName(w.getName());
-        res.setCapacityLimit(w.getCapacityLimit());
-        res.setOwnerUsername(w.getOwner().getUsername());
-        res.setStatus(w.getStatus().name());
-        return res;
+    // t6_controllerRbacGating: Workspace Member Actions
+    @PostMapping("/{id}/members")
+    @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR')")
+    public ResponseEntity<Void> inviteMember(
+            @PathVariable Long id, 
+            @Valid @RequestBody MemberInviteDto dto) {
+        workspaceService.inviteMember(id, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @DeleteMapping("/{id}/members/{userId}")
+    @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
+    public ResponseEntity<Void> removeMember(@PathVariable Long id, @PathVariable Long userId) {
+        workspaceService.removeMember(id, userId);
+        return ResponseEntity.noContent().build();
     }
 }
