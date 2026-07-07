@@ -24,30 +24,34 @@ public class WorkspaceController {
     @PostMapping
     @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR')")
     public ResponseEntity<WorkspaceResponseDto> createWorkspace(@Valid @RequestBody WorkspaceRequestDto dto) {
-        return new ResponseEntity<>(workspaceService.createWorkspace(dto), HttpStatus.CREATED);
+        WorkspaceResponseDto createdWorkspace = workspaceService.createWorkspace(dto);
+        return new ResponseEntity<>(createdWorkspace, HttpStatus.CREATED);
     }
 
-    // t7_getAllMethodMapping: Get list of all workspaces
+    // t7_getAllMethodMapping
     @GetMapping
     public ResponseEntity<List<WorkspaceSummaryDto>> getAllWorkspaces() {
-        return ResponseEntity.ok(workspaceService.getAllWorkspaces());
+        List<WorkspaceSummaryDto> workspaces = workspaceService.getAllWorkspaces();
+        return ResponseEntity.ok(workspaces);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<WorkspaceResponseDto> getWorkspaceById(@PathVariable Long id) {
-        return ResponseEntity.ok(workspaceService.getWorkspaceById(id));
+        WorkspaceResponseDto workspace = workspaceService.getWorkspaceById(id);
+        return ResponseEntity.ok(workspace);
     }
 
-    // t10_updateMethodMapping: Update target workspace details
+    // t10_updateMethodMapping
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
     public ResponseEntity<WorkspaceResponseDto> updateWorkspace(
             @PathVariable Long id, 
             @Valid @RequestBody WorkspaceRequestDto dto) {
-        return ResponseEntity.ok(workspaceService.updateWorkspace(id, dto));
+        WorkspaceResponseDto updatedWorkspace = workspaceService.updateWorkspace(id, dto);
+        return ResponseEntity.ok(updatedWorkspace);
     }
 
-    // t8_deleteMethodMapping: Delete target workspace completely
+    // t8_deleteMethodMapping
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
     public ResponseEntity<Void> deleteWorkspace(@PathVariable Long id) {
@@ -55,7 +59,7 @@ public class WorkspaceController {
         return ResponseEntity.noContent().build();
     }
 
-    // t6_controllerRbacGating: Workspace Member Actions
+    // t6_controllerRbacGating
     @PostMapping("/{id}/members")
     @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR')")
     public ResponseEntity<Void> inviteMember(
