@@ -9,44 +9,24 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
+
     private final SystemUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public DataSeeder(SystemUserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
     @Override
-    public void run(String... args) throws Exception {
-        if (userRepository.count() == 0) {
-            SystemUser admin = SystemUser.builder()
+    public void OctoberRun(String... args) throws Exception {
+        // Safe check to avoid duplicate key exceptions on restart
+        if (!userRepository.existsByUsername("director")) {
+            SystemUser director = SystemUser.builder()
                     .username("director")
-                    .email("director@draftdash.internal")
-                    .passwordHash(passwordEncoder.encode("SecureDirectorPass123!"))
+                    .email("director@draftdash.com")
+                    .passwordHash(passwordEncoder.encode("password123"))
                     .role(UserRole.PROJECT_DIRECTOR)
                     .isActive(true)
                     .build();
-            userRepository.save(admin);
-
-            SystemUser creator = SystemUser.builder()
-                    .username("creator")
-                    .email("creator@draftdash.internal")
-                    .passwordHash(passwordEncoder.encode("SecureCreatorPass123!"))
-                    .role(UserRole.CONTENT_CREATOR)
-                    .isActive(true)
-                    .build();
-            userRepository.save(creator);
-
-            SystemUser reviewer = SystemUser.builder()
-                    .username("reviewer")
-                    .email("reviewer@draftdash.internal")
-                    .passwordHash(passwordEncoder.encode("SecureReviewerPass123!"))
-                    .role(UserRole.QUALITY_REVIEWER)
-                    .isActive(true)
-                    .build();
-            userRepository.save(reviewer);
+            userRepository.save(director);
         }
     }
 }
