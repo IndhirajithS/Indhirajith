@@ -16,16 +16,19 @@ public class DataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public void OctoberRun(String... args) throws Exception {
-        // Safe check to avoid duplicate key exceptions on restart
+    public void run(String... args) throws Exception {
+        // Safe check to avoid duplicate key or unique constraint exceptions on restart
         if (!userRepository.existsByUsername("director")) {
+            
             SystemUser director = SystemUser.builder()
                     .username("director")
                     .email("director@draftdash.com")
-                    .passwordHash(passwordEncoder.encode("password123"))
+                    // Note: double check if your entity uses .password() or .passwordHash()
+                    .passwordHash(passwordEncoder.encode("password123")) 
                     .role(UserRole.PROJECT_DIRECTOR)
                     .isActive(true)
                     .build();
+                    
             userRepository.save(director);
         }
     }
