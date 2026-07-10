@@ -3,14 +3,12 @@ package com.example.demo.controller;
 import com.example.demo.dto.AuthRequestDto;
 import com.example.demo.dto.AuthResponseDto;
 import com.example.demo.dto.RegisterDto;
-import com.example.demo.entity.SystemUser;
 import com.example.demo.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -30,7 +28,7 @@ public class AuthController {
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<List<SystemUser>> getAllUsers() {
+    public ResponseEntity<?> getAllUsers() { // FIXED: Changed return wrapper to wildcard ResponseEntity<?>
         return ResponseEntity.ok(authService.listAllUsers());
     }
 }
