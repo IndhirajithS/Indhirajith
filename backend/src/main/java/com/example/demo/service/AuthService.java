@@ -8,17 +8,19 @@ import com.example.demo.exception.BusinessValidationException;
 import com.example.demo.repository.SystemUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.create.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
     private final SystemUserRepository systemUserRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService; 
+    private final JwtService jwtService; // FIXED: Changed from JwtTokenProvider to JwtService
     private final AuthenticationManager authenticationManager;
 
     @Transactional
@@ -26,6 +28,10 @@ public class AuthService {
         if (systemUserRepository.existsByUsername(dto.getUsername())) {
             throw new BusinessValidationException("Username is already taken");
         }
+        if (systemUserRepository.existsByEmail(dto.getEmail())) {
+            throw new BusinessValidationException("Email is already taken");
+        }
+
         SystemUser user = SystemUser.builder()
                 .username(dto.getUsername())
                 .email(dto.getEmail())
@@ -35,18 +41,25 @@ public class AuthService {
                 .build();
 
         systemUserRepository.save(user);
+        
+        // FIXED: Using jwtService here
         String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
         return new AuthResponseDto(token, user.getUsername(), user.getRole().name());
     }
 
     public AuthResponseDto authenticate(AuthRequestDto dto) {
-        authenticationManager.authenticate(
+        Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword())
         );
         SystemUser user = systemUserRepository.findByUsername(dto.getUsername())
-                .orElseThrow(() -> new BusinessValidationException("Invalid credentials"));
+                .orElseThrow(() -> new BusinessValidationException("Invalid username or password"));
         
+        // FIXED: Using jwtService here
         String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
         return new AuthResponseDto(token, user.getUsername(), user.getRole().name());
+    }
+
+    public List<SystemUser> listAllUsers() {
+        return systemUserRepository.findAll();
     }
 }
