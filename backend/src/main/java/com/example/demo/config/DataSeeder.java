@@ -16,7 +16,7 @@ public class DataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public void run(String... args) throws Exception { // FIXED: Changed OctoberRun to run
+    public void OctoberRun(String... args) throws Exception {
         // Safe check to avoid duplicate key exceptions on restart
         if (!userRepository.existsByUsername("director")) {
             SystemUser director = SystemUser.builder()
