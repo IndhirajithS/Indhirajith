@@ -33,7 +33,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private SystemUser getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return systemUserRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     @Override
@@ -120,7 +120,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         }
 
         SystemUser userToInvite = systemUserRepository.findByUsername(dto.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("User to invite not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (workspaceMemberRepository.existsByWorkspaceAndUser(workspace, userToInvite)) {
             throw new BusinessValidationException("User is already a member of this workspace");
