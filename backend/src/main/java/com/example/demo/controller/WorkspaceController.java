@@ -27,14 +27,14 @@ public class WorkspaceController {
     // t7_getAllMethodMapping & t6_controllerRbacGating
     @GetMapping
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<?> getAllActiveWorkspaces() {
+    public ResponseEntity<?> getAllWorkspaces() {
         // Fixed: changed from getActiveWorkspaces() to getAllWorkspaces()
         Object result = workspaceService.getAllWorkspaces();
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable("id") Long id) {
+    public ResponseEntity<?> getWorkspaceById(@PathVariable("id") Long id) {
         // Fixed: changed from getById(id) to getWorkspaceById(id)
         Object result = workspaceService.getWorkspaceById(id);
         return ResponseEntity.ok(result);
@@ -43,7 +43,7 @@ public class WorkspaceController {
     // t10_updateMethodMapping
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<?> update(@PathVariable("id") Long id, @Valid @RequestBody WorkspaceRequestDto dto) {
+    public ResponseEntity<?> updateWorkspace(@PathVariable("id") Long id, @Valid @RequestBody WorkspaceRequestDto dto) {
         Object result = workspaceService.updateWorkspace(id, dto);
         return ResponseEntity.ok(result);
     }
@@ -59,7 +59,7 @@ public class WorkspaceController {
     // t8_deleteMethodMapping
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<Void> archive(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteWorkspace(@PathVariable("id") Long id) {
         // Fixed: changed from archiveWorkspace(id) to deleteWorkspace(id)
         workspaceService.deleteWorkspace(id);
         return ResponseEntity.noContent().build();
