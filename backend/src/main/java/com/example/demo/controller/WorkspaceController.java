@@ -22,7 +22,7 @@ public class WorkspaceController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR')")
-    public ResponseEntity<WorkspaceResponseDto> create(@Valid @RequestBody WorkspaceRequestDto dto) {
+    public ResponseEntity<WorkspaceResponseDto> createWorkspace(@Valid @RequestBody WorkspaceRequestDto dto) {
         WorkspaceResponseDto result = workspaceService.createWorkspace(dto);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
@@ -30,15 +30,15 @@ public class WorkspaceController {
     // t7_getAllMethodMapping & t6_controllerRbacGating
     @GetMapping
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<List<WorkspaceSummaryDto>> getAll() {
+    public ResponseEntity<List<WorkspaceSummaryDto>> getAllWorkspaces() {
         // Fixed: changed from getActiveWorkspaces() to getAllWorkspaces()
         List<WorkspaceSummaryDto> result = workspaceService.getAllWorkspaces();
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR', 'QUALITY_REVIEWER', 'GUEST_OBSERVER')")
-    public ResponseEntity<WorkspaceResponseDto> getById(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR')")
+    public ResponseEntity<WorkspaceResponseDto> getWorkspaceById(@PathVariable("id") Long id) {
         // Fixed: changed from getById(id) to getWorkspaceById(id)
         WorkspaceResponseDto result = workspaceService.getWorkspaceById(id);
         return ResponseEntity.ok(result);
@@ -47,7 +47,7 @@ public class WorkspaceController {
     // t10_updateMethodMapping
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<WorkspaceResponseDto> update(@PathVariable("id") Long id, @Valid @RequestBody WorkspaceRequestDto dto) {
+    public ResponseEntity<WorkspaceResponseDto> updateWorkspace(@PathVariable("id") Long id, @Valid @RequestBody WorkspaceRequestDto dto) {
         WorkspaceResponseDto result = workspaceService.updateWorkspace(id, dto);
         return ResponseEntity.ok(result);
     }
@@ -60,10 +60,17 @@ public class WorkspaceController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @DeleteMapping("/{id}/members/{userId}")
+    @PreAuthorize("hasAnyRole('PROJECT_DIRECTOR', 'CONTENT_CREATOR')")
+    public ResponseEntity<Void> removeMember(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+        workspaceService.removeMember(id, userId);
+        return ResponseEntity.noContent().build();
+    }
+
     // t8_deleteMethodMapping
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('PROJECT_DIRECTOR')")
-    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteWorkspace(@PathVariable("id") Long id) {
         // Fixed: changed from archiveWorkspace(id) to deleteWorkspace(id)
         workspaceService.deleteWorkspace(id);
         return ResponseEntity.noContent().build();
