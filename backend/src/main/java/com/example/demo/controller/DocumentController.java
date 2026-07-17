@@ -11,6 +11,7 @@ import com.example.demo.service.DocumentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ public class DocumentController {
     private final DocumentService documentService;
 
     @PostMapping
+    @PreAuthorize("hasRole('CONTENT_CREATOR')")
     public ResponseEntity<DocumentResponseDto> create(@RequestBody @Valid DocumentRequestDto dto, Principal principal) {
         Document doc = documentService.createDocument(dto, principal.getName());
         return ResponseEntity.ok(convertToDto(doc));
@@ -106,5 +108,31 @@ public class DocumentController {
         res.setVersionStatus(v.getVersionStatus().name());
         res.setAuthorUsername(v.getAuthor().getUsername());
         return res;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<DocumentResponseDto>> getAll() {
+        List<DocumentResponseDto> list = documentService.getAll().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(list);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
+        if (id == null || id <= 0) {
+            throw new BusinessValidationException("Invalid document ID");
+        }
+        documentService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<DocumentResponseDto> update(@PathVariable("id") Long id, @RequestBody @Valid DocumentRequestDto dto) {
+        if (id == null || id <= 0) {
+            throw new BusinessValidationException("Invalid document ID");
+        }
+        Document doc = documentService.update(id, dto);
+        return ResponseEntity.ok(convertToDto(doc));
     }
 }

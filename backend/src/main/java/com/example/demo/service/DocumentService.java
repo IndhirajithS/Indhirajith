@@ -176,4 +176,25 @@ public class DocumentService {
     public List<DocumentVersion> compareVersions(Long docId, int v1, int v2) {
         return versionRepository.findTwoVersions(docId, v1, v2);
     }
+
+    @Transactional
+    public List<Document> getAll() {
+        return documentRepository.findAll();
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Document doc = getById(id);
+        documentRepository.delete(doc);
+    }
+
+    @Transactional
+    public Document update(Long id, DocumentRequestDto dto) {
+        Document doc = getById(id);
+        doc.setTitle(dto.getTitle());
+        Workspace workspace = workspaceRepository.findById(dto.getWorkspaceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Workspace not found"));
+        doc.setWorkspace(workspace);
+        return documentRepository.save(doc);
+    }
 }
