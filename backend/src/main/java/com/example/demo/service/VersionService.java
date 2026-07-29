@@ -1,6 +1,8 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.*;
+import com.example.demo.dto.VersionCompareDto;
+import com.example.demo.dto.VersionRequestDto;
+import com.example.demo.dto.VersionResponseDto;
 import com.example.demo.entity.*;
 import com.example.demo.exception.BusinessValidationException;
 import com.example.demo.exception.ResourceNotFoundException;
@@ -11,96 +13,106 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class VersionService {
 
-    private final DocumentVersionRepository versionRepository;
+    private final DocumentVersionRepository documentVersionRepository;
     private final DocumentRepository documentRepository;
-    private final SystemUserRepository userRepository;
+    private final SystemUserRepository systemUserRepository;
     private final ReviewCycleRepository reviewCycleRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public VersionResponseDto saveDraftVersion(VersionRequestDto dto, String username) {
-        Document doc = documentRepository.findById(dto.getDocumentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        Document document = documentRepository.findById(dto.getDocumentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Document not found with id " + dto.getDocumentId()));
+        SystemUser user = getUser(username);
 
-        if (doc.getCurrentStatus() != DocumentStatus.DRAFT && doc.getCurrentStatus() != DocumentStatus.REJECTED) {
-            throw new BusinessValidationException("Versions can only be saved when document is DRAFT or REJECTED");
+        if (document.getCurrentStatus() != DocumentStatus.DRAFT && document.getCurrentStatus() != DocumentStatus.REJECTED) {
+            throw new BusinessValidationException("Document must be in DRAFT or REJECTED status to save a new version");
         }
 
-        SystemUser author = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        int nextVersionNumber = versionRepository.countByDocument(doc) + 1;
+        int nextVersionNumber = documentVersionRepository.countByDocument(document) + 1;
 
         DocumentVersion version = DocumentVersion.builder()
-                .document(doc)
+                .document(document)
                 .versionNumber(nextVersionNumber)
                 .contentDelta(dto.getContentDelta())
                 .commitMessage(dto.getCommitMessage())
                 .versionStatus(VersionStatus.DRAFT)
-                .author(author)
+                .author(user)
                 .build();
+        version = documentVersionRepository.save(version);
 
-        version = versionRepository.save(version);
+        document.setLastModifiedBy(user);
+        if (document.getCurrentStatus() == DocumentStatus.REJECTED) {
+            document.setCurrentStatus(DocumentStatus.DRAFT);
+        }
+        documentRepository.save(document);
 
-        doc.setLastModifiedBy(author);
-        doc.setCurrentStatus(DocumentStatus.DRAFT);
-        documentRepository.save(doc);
+        auditLogService.recordAction(user.getId(), AuditActionType.VERSION_SAVED,
+                "Document", document.getId(), "Version " + nextVersionNumber + " saved");
 
-        return mapToDto(version);
+        return toDto(version);
     }
 
     public List<VersionResponseDto> getVersionHistory(Long docId) {
-        Document doc = documentRepository.findById(docId)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        Document document = documentRepository.findById(docId)
+                .orElseThrow(() -> new ResourceNotFoundException("Document not found with id " + docId));
 
-        return versionRepository.findByDocumentOrderByVersionNumberDesc(doc)
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+        return documentVersionRepository.findByDocumentOrderByVersionNumberDesc(document)
+                .stream().map(this::toDto).toList();
     }
 
     public VersionResponseDto getVersionById(Long versionId) {
-        DocumentVersion version = versionRepository.findById(versionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Version not found"));
-        return mapToDto(version);
+        DocumentVersion version = getVersion(versionId);
+        return toDto(version);
     }
 
     public VersionCompareDto compareVersions(Long docId, int v1, int v2) {
-        List<DocumentVersion> versions = versionRepository.findTwoVersions(docId, v1, v2);
+        List<DocumentVersion> versions = documentVersionRepository.findTwoVersions(docId, v1, v2);
 
-        DocumentVersion version1 = versions.stream().filter(v -> v.getVersionNumber() == v1).findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Version " + v1 + " not found"));
-        DocumentVersion version2 = versions.stream().filter(v -> v.getVersionNumber() == v2).findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Version " + v2 + " not found"));
+        DocumentVersion versionA = versions.stream().filter(v -> v.getVersionNumber() == v1).findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Version " + v1 + " not found for document " + docId));
+        DocumentVersion versionB = versions.stream().filter(v -> v.getVersionNumber() == v2).findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Version " + v2 + " not found for document " + docId));
 
-        int countA = countWords(version1.getContentDelta());
-        int countB = countWords(version2.getContentDelta());
-        int delta = countB - countA;
-        double pct = countA == 0 ? (countB == 0 ? 0.0 : 100.0) : ((double) delta / countA) * 100.0;
+        int wordCountA = countWords(versionA.getContentDelta());
+        int wordCountB = countWords(versionB.getContentDelta());
+        int delta = wordCountB - wordCountA;
+        double percentage = wordCountA == 0 ? 0.0 : (delta * 100.0) / wordCountA;
 
         return VersionCompareDto.builder()
-                .versionA(mapToDto(version1))
-                .versionB(mapToDto(version2))
-                .wordCountA(countA)
-                .wordCountB(countB)
+                .versionA(toDto(versionA))
+                .versionB(toDto(versionB))
+                .wordCountA(wordCountA)
+                .wordCountB(wordCountB)
                 .wordCountDelta(delta)
-                .changePercentage(pct)
+                .changePercentage(percentage)
                 .build();
     }
 
-    private int countWords(String str) {
-        if (str == null || str.trim().isEmpty()) return 0;
-        return str.trim().split("\\s+").length;
+    private int countWords(String text) {
+        if (text == null || text.isBlank()) return 0;
+        return text.trim().split("\\s+").length;
     }
 
-    private VersionResponseDto mapToDto(DocumentVersion v) {
-        Optional<ReviewCycle> rc = reviewCycleRepository.findByVersion(v);
-        return VersionResponseDto.builder()
+    private DocumentVersion getVersion(Long versionId) {
+        return documentVersionRepository.findById(versionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Version not found with id " + versionId));
+    }
+
+    private SystemUser getUser(String username) {
+        return systemUserRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+    }
+
+    private VersionResponseDto toDto(DocumentVersion v) {
+        Optional<ReviewCycle> reviewCycle = reviewCycleRepository.findByVersion(v);
+
+        VersionResponseDto.VersionResponseDtoBuilder builder = VersionResponseDto.builder()
                 .id(v.getId())
                 .documentId(v.getDocument().getId())
                 .documentTitle(v.getDocument().getTitle())
@@ -109,9 +121,12 @@ public class VersionService {
                 .commitMessage(v.getCommitMessage())
                 .versionStatus(v.getVersionStatus())
                 .authorUsername(v.getAuthor().getUsername())
-                .createdAt(v.getCreatedAt())
-                .reviewDecision(rc.map(ReviewCycle::getDecision).orElse(null))
-                .reviewerUsername(rc.map(r -> r.getAssignedReviewer().getUsername()).orElse(null))
-                .build();
+                .createdAt(v.getCreatedAt());
+
+        reviewCycle.ifPresent(rc -> builder
+                .reviewDecision(rc.getDecision())
+                .reviewerUsername(rc.getAssignedReviewer().getUsername()));
+
+        return builder.build();
     }
 }
