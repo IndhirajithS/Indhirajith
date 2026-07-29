@@ -24,6 +24,19 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    // Public OpenAPI / Swagger endpoints that bypass authentication filter
+    private static final String[] SWAGGER_WHITELIST = {
+        "/v3/api-docs",
+        "/v3/api-docs/**",
+        "/swagger-ui/**",
+        "/swagger-ui.html",
+        "/swagger-resources",
+        "/swagger-resources/**",
+        "/configuration/ui",
+        "/configuration/security",
+        "/webjars/**"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -35,13 +48,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 
                 // Allow public Swagger / OpenAPI endpoints
-                .requestMatchers(
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/swagger-resources/**",
-                    "/webjars/**"
-                ).permitAll()
+                .requestMatchers(SWAGGER_WHITELIST).permitAll()
                 
                 // t13_adminRoleGating: Strict outer administrative gate at the filter level
                 .requestMatchers("/api/admin/**").hasRole("PROJECT_DIRECTOR")
