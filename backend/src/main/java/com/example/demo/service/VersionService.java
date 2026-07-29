@@ -34,7 +34,8 @@ public class VersionService {
             throw new BusinessValidationException("Document must be in DRAFT or REJECTED status to save a new version");
         }
 
-        int nextVersionNumber = documentVersionRepository.countByDocument(document) + 1;
+        // Safe cast in case countByDocument returns long in repository
+        int nextVersionNumber = ((Number) documentVersionRepository.countByDocument(document)).intValue() + 1;
 
         DocumentVersion version = DocumentVersion.builder()
                 .document(document)
