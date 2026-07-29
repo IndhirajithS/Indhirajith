@@ -31,7 +31,17 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Allow public authentication endpoints
                 .requestMatchers("/api/auth/**").permitAll()
+                
+                // Allow public Swagger / OpenAPI endpoints
+                .requestMatchers(
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/swagger-resources/**",
+                    "/webjars/**"
+                ).permitAll()
                 
                 // t13_adminRoleGating: Strict outer administrative gate at the filter level
                 .requestMatchers("/api/admin/**").hasRole("PROJECT_DIRECTOR")
