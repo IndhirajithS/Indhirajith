@@ -18,7 +18,7 @@ public class OpenApiConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("AssetArc API")
+                        .title("DAFTDASH API")
                         .version("1.0"))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
