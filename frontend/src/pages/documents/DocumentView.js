@@ -14,7 +14,6 @@ import { useAuth } from '../../context/AuthContext';
 export const DocumentView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { hasRole } = useAuth();
 
   const [document, setDocument] = useState(null);
   const [versions, setVersions] = useState([]);
