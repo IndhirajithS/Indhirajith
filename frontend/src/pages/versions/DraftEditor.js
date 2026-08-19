@@ -61,6 +61,7 @@ export const DraftEditor = () => {
     };
 
     loadDocData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDocId]);
 
   const handleSaveVersion = async (content, commitMessage) => {

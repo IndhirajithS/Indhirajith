@@ -49,6 +49,7 @@ export const DocumentView = () => {
 
   useEffect(() => {
     if (id) fetchDocument();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleRetract = async () => {

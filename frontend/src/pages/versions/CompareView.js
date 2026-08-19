@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import PageContainer from '../../components/layout/PageContainer';
 import versionService from '../../services/versionService';
-import documentService from '../../services/documentService';
 import VersionDiffViewer from '../../components/versions/VersionDiffViewer';
 import Loader from '../../components/common/Loader';
 import Button from '../../components/common/Button';
@@ -20,9 +19,8 @@ export const CompareView = () => {
 
   const [v1Content, setV1Content] = useState('');
   const [v2Content, setV2Content] = useState('');
-  const [availableVersions, setAvailableVersions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState({ message: '', type: 'info' });
+  const [toast] = useState({ message: '', type: 'info' });
 
   // Load versions list for the document
   useEffect(() => {
@@ -61,6 +59,7 @@ export const CompareView = () => {
 
   useEffect(() => {
     loadCompareDiff();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docId, v1Number, v2Number]);
 
   const handleUpdateComparison = (e) => {
