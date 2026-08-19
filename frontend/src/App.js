@@ -1,92 +1,95 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { useSelector } from 'react-redux';
 
-// Pages
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
-import Dashboard from './pages/dashboard/Dashboard';
-import DocumentList from './pages/documents/DocumentList';
-import DocumentView from './pages/documents/DocumentView';
-import DraftEditor from './pages/versions/DraftEditor';
-import CompareView from './pages/versions/CompareView';
-import Loader from './components/common/Loader';
+import Navbar from './components/layout/Navbar';
+import Dashboard from './components/dashboard/Dashboard';
+import WorkspaceList from './components/workspace/WorkspaceList';
+import WorkspaceDetail from './components/workspace/WorkspaceDetail';
+import DocumentList from './components/document/DocumentList';
+import DocumentEditor from './components/document/DocumentEditor';
+import AuditLogList from './components/audit/AuditLogList';
+import Login from './components/Login';
 
-// Protected Route Guard
-const ProtectedRoute = ({ children, requiredRole }) => {
-  const { isAuthenticated, loading, hasRole } = useAuth();
-
-  if (loading) {
-    return <Loader label="Verifying security credentials..." fullScreen />;
-  }
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   if (!isAuthenticated) {
-    return <Navigate to="/auth/login" replace />;
-  }
-
-  if (requiredRole && !hasRole(requiredRole)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;
 };
 
 export const App = () => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+
   return (
-    <Routes>
-      {/* Public Auth Routes */}
-      <Route path="/auth/login" element={<LoginPage />} />
-      <Route path="/auth/register" element={<RegisterPage />} />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      {isAuthenticated && <Navbar />}
 
-      {/* Protected Main Application Routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-      <Route
-        path="/documents"
-        element={
-          <ProtectedRoute>
-            <DocumentList />
-          </ProtectedRoute>
-        }
-      />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-      <Route
-        path="/documents/:id"
-        element={
-          <ProtectedRoute>
-            <DocumentView />
-          </ProtectedRoute>
-        }
-      />
+          <Route
+            path="/workspaces"
+            element={
+              <ProtectedRoute>
+                <WorkspaceList />
+              </ProtectedRoute>
+            }
+          />
 
-      <Route
-        path="/versions/draft"
-        element={
-          <ProtectedRoute>
-            <DraftEditor />
-          </ProtectedRoute>
-        }
-      />
+          <Route
+            path="/workspaces/:id"
+            element={
+              <ProtectedRoute>
+                <WorkspaceDetail />
+              </ProtectedRoute>
+            }
+          />
 
-      <Route
-        path="/versions/compare/:v1/:v2"
-        element={
-          <ProtectedRoute>
-            <CompareView />
-          </ProtectedRoute>
-        }
-      />
+          <Route
+            path="/documents"
+            element={
+              <ProtectedRoute>
+                <DocumentList />
+              </ProtectedRoute>
+            }
+          />
 
-      {/* Fallback Route */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+          <Route
+            path="/documents/:id"
+            element={
+              <ProtectedRoute>
+                <DocumentEditor />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/audit"
+            element={
+              <ProtectedRoute>
+                <AuditLogList />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+        </Routes>
+      </main>
+    </div>
   );
 };
 
