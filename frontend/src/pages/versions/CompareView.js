@@ -20,15 +20,7 @@ export const CompareView = () => {
   const [v1Content, setV1Content] = useState('');
   const [v2Content, setV2Content] = useState('');
   const [loading, setLoading] = useState(true);
-  const [toast] = useState({ message: '', type: 'info' });
-
-  // Load versions list for the document
-  useEffect(() => {
-    if (!docId) return;
-    versionService.getVersionHistory(docId)
-      .then((list) => setAvailableVersions(list || []))
-      .catch((err) => console.error('Failed to load version history for compare:', err));
-  }, [docId]);
+  const [toast, setToast] = useState({ message: '', type: 'info' });
 
   // Load diff content
   const loadCompareDiff = async () => {
