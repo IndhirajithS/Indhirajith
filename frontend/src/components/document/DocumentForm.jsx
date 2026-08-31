@@ -38,22 +38,18 @@ export const DocumentForm = ({
   const hasCloseHandler = Boolean(onClose || onCancel || onDismiss || closeModal);
 
   useEffect(() => {
-    let isMounted = true;
-    try {
-      axios.get('/api/workspaces').then((res) => {
-        if (isMounted && res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+    // Fetch workspaces to populate the dropdown
+    axios.get('/api/workspaces')
+      .then((res) => {
+        if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
           setFetchedWorkspaces(res.data);
         }
-      }).catch(() => {});
-    } catch (e) {
-      // safe
-    }
+      })
+      .catch(console.error);
+
     if (dispatch) {
       dispatch(fetchWorkspaces());
     }
-    return () => {
-      isMounted = false;
-    };
   }, [dispatch]);
 
   useEffect(() => {

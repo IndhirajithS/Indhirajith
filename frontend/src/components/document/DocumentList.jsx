@@ -26,12 +26,10 @@ export const DocumentList = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    try {
-      axios.get('/api/documents').catch(() => {});
-      axios.get('/api/workspaces').catch(() => {});
-    } catch (e) {
-      // safe in test environments
-    }
+    // Fetch documents on component mount
+    axios.get('/api/documents').catch(console.error);
+    axios.get('/api/workspaces').catch(console.error);
+
     if (dispatch) {
       dispatch(fetchDocuments());
       dispatch(fetchWorkspaces());

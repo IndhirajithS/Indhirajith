@@ -31,6 +31,15 @@ export const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
 
       <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
@@ -84,7 +93,7 @@ export const AppRoutes = () => {
         }
       />
 
-      <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+      <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
     </Routes>
   );
 };

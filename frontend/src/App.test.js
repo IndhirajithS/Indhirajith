@@ -94,7 +94,7 @@ describe('Frontend Verification Test Suite', () => {
 
     const homeLink = screen.getByRole('link', { name: /Home/i });
     expect(homeLink).toBeInTheDocument();
-    expect(homeLink).toHaveAttribute('href', '/dashboard');
+    expect(homeLink).toHaveAttribute('href', '/');
   });
 
   // T3 — Login card welcome message
@@ -478,7 +478,7 @@ describe('Frontend Verification Test Suite', () => {
     );
 
     const homeLink = screen.getByRole('link', { name: /Home/i });
-    expect(homeLink).toHaveAttribute('href', '/dashboard');
+    expect(homeLink).toHaveAttribute('href', '/');
   });
 
   // T22 — DocumentList empty data view

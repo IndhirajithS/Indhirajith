@@ -6,7 +6,7 @@ import { logout } from '../../store/slices/authSlice';
 export const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth || {});
 
   const handleLogout = () => {
     dispatch(logout());
@@ -25,7 +25,7 @@ export const Navbar = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-6">
-          <NavLink to="/dashboard" className="flex items-center gap-2 font-bold text-xl text-white tracking-tight">
+          <NavLink to="/" className="flex items-center gap-2 font-bold text-xl text-white tracking-tight">
             <span className="p-1.5 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg shadow-md text-white font-mono text-sm font-extrabold">
               DD
             </span>
@@ -36,7 +36,7 @@ export const Navbar = () => {
 
           {/* Nav links */}
           <div className="hidden md:flex items-center gap-1">
-            <NavLink to="/dashboard" className={navItemClass}>
+            <NavLink to="/" className={navItemClass}>
               <span>🏠</span> Home
             </NavLink>
             <NavLink to="/dashboard" className={navItemClass}>
