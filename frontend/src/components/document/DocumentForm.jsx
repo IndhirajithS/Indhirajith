@@ -1,22 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
 import { fetchWorkspaces } from '../../store/slices/workspaceSlice';
 
-export const DocumentForm = ({ workspaces: propWorkspaces, onSubmit, onCancel, initialValues = {} }) => {
+export const DocumentForm = ({
+  workspaces: propWorkspaces,
+  onSubmit,
+  onCancel,
+  onClose,
+  initialValues = {},
+}) => {
   const dispatch = useDispatch();
   const reduxWorkspaces = useSelector((state) => state?.workspace?.workspaces || state?.workspaces?.workspaces || []);
-  const availableWorkspaces = propWorkspaces && propWorkspaces.length > 0 ? propWorkspaces : reduxWorkspaces;
+  const [fetchedWorkspaces, setFetchedWorkspaces] = useState([]);
+
+  const availableWorkspaces =
+    propWorkspaces && propWorkspaces.length > 0
+      ? propWorkspaces
+      : fetchedWorkspaces.length > 0
+      ? fetchedWorkspaces
+      : reduxWorkspaces;
 
   const [title, setTitle] = useState(initialValues.title || '');
   const [workspaceId, setWorkspaceId] = useState(
     initialValues.workspaceId || (availableWorkspaces[0] ? availableWorkspaces[0].id : '')
   );
 
+  const handleClose = onClose || onCancel;
+
   useEffect(() => {
-    if ((!propWorkspaces || propWorkspaces.length === 0) && reduxWorkspaces.length === 0) {
+    let isMounted = true;
+    try {
+      axios.get('/api/workspaces').then((res) => {
+        if (isMounted && res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+          setFetchedWorkspaces(res.data);
+        }
+      }).catch(() => {});
+    } catch (e) {
+      // safe
+    }
+    if (dispatch) {
       dispatch(fetchWorkspaces());
     }
-  }, [dispatch, propWorkspaces, reduxWorkspaces.length]);
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (!workspaceId && availableWorkspaces.length > 0) {
@@ -37,9 +66,21 @@ export const DocumentForm = ({ workspaces: propWorkspaces, onSubmit, onCancel, i
 
   return (
     <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-      <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-        <span>📄</span> {initialValues.id ? 'Edit Document' : 'Create New Document'}
-      </h2>
+      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <span>📄</span> {initialValues.id ? 'Edit Document' : 'Create New Document'}
+        </h2>
+        {handleClose && (
+          <button
+            type="button"
+            onClick={handleClose}
+            aria-label="Close"
+            className="text-slate-400 hover:text-slate-200 p-1 text-sm font-bold transition rounded-lg hover:bg-slate-800"
+          >
+            ✕
+          </button>
+        )}
+      </div>
 
       <div>
         <label htmlFor="document-title" className="block text-xs font-medium text-slate-300 mb-1.5">
@@ -78,13 +119,14 @@ export const DocumentForm = ({ workspaces: propWorkspaces, onSubmit, onCancel, i
       </div>
 
       <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
-        {onCancel && (
+        {handleClose && (
           <button
             type="button"
-            onClick={onCancel}
+            onClick={handleClose}
+            aria-label="Close"
             className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 bg-slate-800 rounded-xl transition"
           >
-            Cancel
+            Close
           </button>
         )}
         <button

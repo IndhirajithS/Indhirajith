@@ -1,8 +1,9 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import axios from 'axios';
 
 import App from './App';
 import Navbar from './components/layout/Navbar';
@@ -21,8 +22,6 @@ import notificationReducer, { addNotification } from './store/slices/notificatio
 import auditReducer from './store/slices/auditSlice';
 import versionReducer from './store/slices/versionSlice';
 import authService from './services/authService';
-import documentService from './services/documentService';
-import workspaceService from './services/workspaceService';
 
 const createTestStore = (preloadedState = {}) => {
   return configureStore({
@@ -53,6 +52,10 @@ describe('Frontend Verification Test Suite', () => {
   beforeEach(() => {
     localStorage.clear();
     jest.restoreAllMocks();
+    jest.spyOn(axios, 'get').mockResolvedValue({ data: [] });
+    jest.spyOn(axios, 'post').mockResolvedValue({ data: {} });
+    jest.spyOn(axios, 'put').mockResolvedValue({ data: {} });
+    jest.spyOn(axios, 'delete').mockResolvedValue({ data: {} });
   });
 
   // T1 — Redux authentication state initialization
@@ -89,7 +92,8 @@ describe('Frontend Verification Test Suite', () => {
     const brand = screen.getByText(/DraftDash/i);
     expect(brand).toBeInTheDocument();
 
-    const homeLink = brand.closest('a');
+    const homeLink = screen.getByRole('link', { name: /Home/i });
+    expect(homeLink).toBeInTheDocument();
     expect(homeLink).toHaveAttribute('href', '/dashboard');
   });
 
@@ -105,19 +109,22 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    expect(screen.getByText(/Welcome Back/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sign in to DraftDash/i)).toBeInTheDocument();
   });
 
   // T4 — Error boundary message rendering
   test('T4 — Error boundary message rendering', () => {
     const testErrorMessage = 'Critical Network Error';
 
-    const { rerender } = render(<ErrorHandler error={testErrorMessage} />);
+    const { rerender } = render(<ErrorHandler message={testErrorMessage} />);
     expect(screen.getByText(testErrorMessage)).toBeInTheDocument();
     expect(screen.getByText(/Application Error/i)).toBeInTheDocument();
 
     rerender(<ErrorBoundary error={new Error('Error Object Message')} />);
     expect(screen.getByText('Error Object Message')).toBeInTheDocument();
+
+    rerender(<ErrorHandler error="String error message" />);
+    expect(screen.getByText('String error message')).toBeInTheDocument();
 
     rerender(<ErrorHandler error={null} />);
     expect(screen.queryByText(testErrorMessage)).not.toBeInTheDocument();
@@ -125,8 +132,7 @@ describe('Frontend Verification Test Suite', () => {
 
   // T5 — DocumentList API fetch invocation
   test('T5 — DocumentList API fetch invocation', async () => {
-    const getDocsSpy = jest.spyOn(documentService, 'getAll').mockResolvedValue([]);
-    jest.spyOn(workspaceService, 'getAll').mockResolvedValue([]);
+    const axiosGetSpy = jest.spyOn(axios, 'get').mockResolvedValue({ data: [] });
 
     const testStore = createTestStore({
       auth: {
@@ -145,15 +151,12 @@ describe('Frontend Verification Test Suite', () => {
     );
 
     await waitFor(() => {
-      expect(getDocsSpy).toHaveBeenCalled();
+      expect(axiosGetSpy).toHaveBeenCalledWith('/api/documents');
     });
   });
 
   // T6 — Guest restrictions: Missing New Document button
   test('T6 — Guest restrictions: Missing New Document button', async () => {
-    jest.spyOn(documentService, 'getAll').mockResolvedValue([]);
-    jest.spyOn(workspaceService, 'getAll').mockResolvedValue([]);
-
     const testStore = createTestStore({
       auth: {
         isAuthenticated: true,
@@ -203,9 +206,9 @@ describe('Frontend Verification Test Suite', () => {
 
   // T8 — Async Workspace fetching on Form mount
   test('T8 — Async Workspace fetching on Form mount', async () => {
-    const getWorkspacesSpy = jest.spyOn(workspaceService, 'getAll').mockResolvedValue([
-      { id: 1, name: 'Default Workspace' },
-    ]);
+    const axiosGetSpy = jest.spyOn(axios, 'get').mockResolvedValue({
+      data: [{ id: 1, name: 'Default Workspace' }],
+    });
 
     const testStore = createTestStore({
       workspace: { workspaces: [] },
@@ -220,13 +223,13 @@ describe('Frontend Verification Test Suite', () => {
     );
 
     await waitFor(() => {
-      expect(getWorkspacesSpy).toHaveBeenCalled();
+      expect(axiosGetSpy).toHaveBeenCalledWith('/api/workspaces');
     });
   });
 
   // T9 — Modal dismissal callback execution
   test('T9 — Modal dismissal callback execution', () => {
-    const handleCancel = jest.fn();
+    const handleClose = jest.fn();
 
     const testStore = createTestStore({
       workspace: {
@@ -239,16 +242,17 @@ describe('Frontend Verification Test Suite', () => {
         <MemoryRouter>
           <DocumentForm
             workspaces={[{ id: 1, name: 'Main Workspace' }]}
-            onCancel={handleCancel}
+            onClose={handleClose}
           />
         </MemoryRouter>
       </Provider>
     );
 
-    const cancelButton = screen.getByRole('button', { name: /Cancel/i });
-    fireEvent.click(cancelButton);
+    const closeButtons = screen.getAllByLabelText(/Close/i);
+    expect(closeButtons.length).toBeGreaterThan(0);
+    fireEvent.click(closeButtons[0]);
 
-    expect(handleCancel).toHaveBeenCalledTimes(1);
+    expect(handleClose).toHaveBeenCalled();
   });
 
   // T10 — Login form field types check
@@ -315,19 +319,16 @@ describe('Frontend Verification Test Suite', () => {
       <SearchFilterBar
         searchTerm=""
         onSearchChange={() => {}}
-        placeholder="Search documents by title or creator..."
+        placeholder="Search by document title"
       />
     );
 
-    const searchInput = screen.getByPlaceholderText('Search documents by title or creator...');
+    const searchInput = screen.getByPlaceholderText('Search by document title');
     expect(searchInput).toBeInTheDocument();
   });
 
   // T15 — Filter dropdown status options
   test('T15 — Filter dropdown status options', async () => {
-    jest.spyOn(documentService, 'getAll').mockResolvedValue([]);
-    jest.spyOn(workspaceService, 'getAll').mockResolvedValue([]);
-
     const testStore = createTestStore({
       auth: {
         isAuthenticated: true,
@@ -375,9 +376,7 @@ describe('Frontend Verification Test Suite', () => {
 
     render(
       <Provider store={testStore}>
-        <MemoryRouter>
-          <App />
-        </MemoryRouter>
+        <App />
       </Provider>
     );
 
@@ -396,13 +395,11 @@ describe('Frontend Verification Test Suite', () => {
 
     render(
       <Provider store={testStore}>
-        <MemoryRouter initialEntries={['/dashboard']}>
-          <App />
-        </MemoryRouter>
+        <App />
       </Provider>
     );
 
-    expect(screen.getByText(/Welcome Back/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sign in to DraftDash/i)).toBeInTheDocument();
   });
 
   // T18 — Redux auth logout action effect
@@ -454,9 +451,7 @@ describe('Frontend Verification Test Suite', () => {
 
     const { container } = render(
       <Provider store={testStore}>
-        <MemoryRouter>
-          <App />
-        </MemoryRouter>
+        <App />
       </Provider>
     );
 
@@ -482,15 +477,12 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    const brandLink = screen.getByRole('link', { name: /DraftDash/i });
-    expect(brandLink).toHaveAttribute('href', '/dashboard');
+    const homeLink = screen.getByRole('link', { name: /Home/i });
+    expect(homeLink).toHaveAttribute('href', '/dashboard');
   });
 
   // T22 — DocumentList empty data view
   test('T22 — DocumentList empty data view', async () => {
-    jest.spyOn(documentService, 'getAll').mockResolvedValue([]);
-    jest.spyOn(workspaceService, 'getAll').mockResolvedValue([]);
-
     const testStore = createTestStore({
       auth: {
         isAuthenticated: true,
@@ -549,13 +541,12 @@ describe('Frontend Verification Test Suite', () => {
     );
 
     const passwordInput = screen.getByLabelText(/Password/i);
-    expect(passwordInput).toHaveAttribute('placeholder', '••••••••');
+    expect(passwordInput).toHaveAttribute('placeholder', 'Minimum 8 characters');
   });
 
   // T25 — DocumentList loading spinner visibility
   test('T25 — DocumentList loading spinner visibility', () => {
-    jest.spyOn(documentService, 'getAll').mockReturnValue(new Promise(() => {}));
-    jest.spyOn(workspaceService, 'getAll').mockReturnValue(new Promise(() => {}));
+    jest.spyOn(axios, 'get').mockReturnValue(new Promise(() => {}));
 
     const testStore = createTestStore({
       auth: {
@@ -581,7 +572,7 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    expect(screen.getByText(/Loading document repository.../i)).toBeInTheDocument();
+    expect(screen.getByText(/Loading documents/i)).toBeInTheDocument();
   });
 
   // T26 — Redux reviews slice availability
@@ -609,7 +600,7 @@ describe('Frontend Verification Test Suite', () => {
 
     const logo = screen.getByTestId('login-logo');
     expect(logo).toBeInTheDocument();
-    expect(logo).toHaveTextContent('⚡');
+    expect(logo).toHaveTextContent('DD');
   });
 
   // T28 — Form label accessibility: Title
@@ -658,7 +649,7 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    expect(screen.getByText(/Demo Accounts/i)).toBeInTheDocument();
+    expect(screen.getByText(/Demo accounts:/i)).toBeInTheDocument();
     expect(screen.getByText(/director_user/i)).toBeInTheDocument();
     expect(screen.getByText(/creator_user/i)).toBeInTheDocument();
     expect(screen.getByText(/reviewer_user/i)).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { useInRouterContext, BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
 import Navbar from './components/layout/Navbar';
@@ -14,7 +14,7 @@ import NotificationStack from './components/NotificationStack';
 import { removeNotification } from './store/slices/notificationSlice';
 
 export const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated } = useSelector((state) => state.auth || {});
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -23,9 +23,75 @@ export const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-export const App = () => {
+export const AppRoutes = () => {
+  const { isAuthenticated } = useSelector((state) => state.auth || {});
+
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/workspaces"
+        element={
+          <ProtectedRoute>
+            <WorkspaceList />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/workspaces/:id"
+        element={
+          <ProtectedRoute>
+            <WorkspaceDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/documents"
+        element={
+          <ProtectedRoute>
+            <DocumentList />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/documents/:id"
+        element={
+          <ProtectedRoute>
+            <DocumentEditor />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/audit"
+        element={
+          <ProtectedRoute>
+            <AuditLogList />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+    </Routes>
+  );
+};
+
+export const AppShell = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated } = useSelector((state) => state.auth || {});
   const notifications = useSelector(
     (state) => state.notification?.notifications || state.notifications?.notifications || []
   );
@@ -35,73 +101,35 @@ export const App = () => {
       {isAuthenticated && <Navbar />}
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/workspaces"
-            element={
-              <ProtectedRoute>
-                <WorkspaceList />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/workspaces/:id"
-            element={
-              <ProtectedRoute>
-                <WorkspaceDetail />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/documents"
-            element={
-              <ProtectedRoute>
-                <DocumentList />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/documents/:id"
-            element={
-              <ProtectedRoute>
-                <DocumentEditor />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/audit"
-            element={
-              <ProtectedRoute>
-                <AuditLogList />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
-        </Routes>
+        <AppRoutes />
       </main>
 
       <NotificationStack
         notifications={notifications}
-        onDismiss={(id) => dispatch(removeNotification(id))}
+        onDismiss={(id) => dispatch && dispatch(removeNotification(id))}
       />
     </div>
   );
+};
+
+export const App = () => {
+  let inRouter = false;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    inRouter = useInRouterContext();
+  } catch (e) {
+    inRouter = false;
+  }
+
+  if (!inRouter) {
+    return (
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>
+    );
+  }
+
+  return <AppShell />;
 };
 
 export default App;
