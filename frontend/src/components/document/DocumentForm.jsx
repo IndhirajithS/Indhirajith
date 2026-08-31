@@ -8,6 +8,8 @@ export const DocumentForm = ({
   onSubmit,
   onCancel,
   onClose,
+  onDismiss,
+  closeModal,
   initialValues = {},
 }) => {
   const dispatch = useDispatch();
@@ -26,7 +28,14 @@ export const DocumentForm = ({
     initialValues.workspaceId || (availableWorkspaces[0] ? availableWorkspaces[0].id : '')
   );
 
-  const handleClose = onClose || onCancel;
+  const handleClose = (e) => {
+    if (onClose) onClose(e);
+    if (onCancel) onCancel(e);
+    if (onDismiss) onDismiss(e);
+    if (closeModal) closeModal(e);
+  };
+
+  const hasCloseHandler = Boolean(onClose || onCancel || onDismiss || closeModal);
 
   useEffect(() => {
     let isMounted = true;
@@ -70,7 +79,7 @@ export const DocumentForm = ({
         <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
           <span>📄</span> {initialValues.id ? 'Edit Document' : 'Create New Document'}
         </h2>
-        {handleClose && (
+        {hasCloseHandler && (
           <button
             type="button"
             onClick={handleClose}
@@ -119,15 +128,25 @@ export const DocumentForm = ({
       </div>
 
       <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
-        {handleClose && (
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label="Close"
-            className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 bg-slate-800 rounded-xl transition"
-          >
-            Close
-          </button>
+        {hasCloseHandler && (
+          <>
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Cancel"
+              className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 bg-slate-800 rounded-xl transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Close"
+              className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 bg-slate-800 rounded-xl transition"
+            >
+              Close
+            </button>
+          </>
         )}
         <button
           type="submit"
