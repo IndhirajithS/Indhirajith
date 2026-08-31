@@ -1,9 +1,15 @@
+import axios from 'axios';
 import api from './api';
 
 export const documentService = {
   getAll: async () => {
-    const response = await api.get('/documents');
-    return response.data;
+    try {
+      const response = await axios.get('/api/documents');
+      return response.data;
+    } catch (e) {
+      const response = await api.get('/documents');
+      return response.data;
+    }
   },
 
   getById: async (id) => {

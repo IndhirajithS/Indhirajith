@@ -6,7 +6,7 @@ export const SearchFilterBar = ({
   filterValue = 'ALL',
   onFilterChange,
   filterOptions = [],
-  placeholder = 'Search...',
+  placeholder = 'Search by document title',
 }) => {
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6 bg-slate-900/60 p-3 rounded-xl border border-slate-800 backdrop-blur-sm">

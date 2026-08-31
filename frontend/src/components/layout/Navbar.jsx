@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
 
@@ -26,8 +26,8 @@ export const Navbar = () => {
         {/* Brand */}
         <div className="flex items-center gap-6">
           <NavLink to="/dashboard" className="flex items-center gap-2 font-bold text-xl text-white tracking-tight">
-            <span className="p-1.5 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg shadow-md text-white">
-              ⚡
+            <span className="p-1.5 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg shadow-md text-white font-mono text-sm font-extrabold">
+              DD
             </span>
             <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
               DraftDash
@@ -36,6 +36,9 @@ export const Navbar = () => {
 
           {/* Nav links */}
           <div className="hidden md:flex items-center gap-1">
+            <NavLink to="/dashboard" className={navItemClass}>
+              <span>🏠</span> Home
+            </NavLink>
             <NavLink to="/dashboard" className={navItemClass}>
               <span>📊</span> Dashboard
             </NavLink>
@@ -70,12 +73,12 @@ export const Navbar = () => {
             </button>
           </div>
         ) : (
-          <NavLink
+          <Link
             to="/login"
             className="px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition"
           >
             Login
-          </NavLink>
+          </Link>
         )}
       </div>
     </nav>

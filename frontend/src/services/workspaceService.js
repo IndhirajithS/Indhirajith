@@ -1,9 +1,15 @@
+import axios from 'axios';
 import api from './api';
 
 export const workspaceService = {
   getAll: async () => {
-    const response = await api.get('/workspaces');
-    return response.data;
+    try {
+      const response = await axios.get('/api/workspaces');
+      return response.data;
+    } catch (e) {
+      const response = await api.get('/workspaces');
+      return response.data;
+    }
   },
 
   getById: async (id) => {

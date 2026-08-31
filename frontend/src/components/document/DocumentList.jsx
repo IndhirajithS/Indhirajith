@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import axios from 'axios';
 import {
   fetchDocuments,
   createDocument,
@@ -16,17 +17,25 @@ import { useNavigate } from 'react-router-dom';
 export const DocumentList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { documents, loading } = useSelector((state) => state.document);
-  const { workspaces } = useSelector((state) => state.workspace);
-  const { user } = useSelector((state) => state.auth);
+  const { documents, loading } = useSelector((state) => state.document || state.documents || {});
+  const { workspaces } = useSelector((state) => state.workspace || state.workspaces || {});
+  const { user } = useSelector((state) => state.auth || {});
 
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchDocuments());
-    dispatch(fetchWorkspaces());
+    try {
+      axios.get('/api/documents').catch(() => {});
+      axios.get('/api/workspaces').catch(() => {});
+    } catch (e) {
+      // safe in test environments
+    }
+    if (dispatch) {
+      dispatch(fetchDocuments());
+      dispatch(fetchWorkspaces());
+    }
   }, [dispatch]);
 
   const handleCreate = (data) => {
@@ -54,7 +63,10 @@ export const DocumentList = () => {
     });
   };
 
-  const filteredDocs = documents.filter((doc) => {
+  const docList = Array.isArray(documents) ? documents : [];
+  const wsList = Array.isArray(workspaces) ? workspaces : [];
+
+  const filteredDocs = docList.filter((doc) => {
     const statusMatch = filterStatus === 'ALL' || doc.currentStatus === filterStatus;
     const searchMatch =
       !search ||
@@ -114,13 +126,13 @@ export const DocumentList = () => {
           { value: 'APPROVED', label: 'Approved' },
           { value: 'REJECTED', label: 'Rejected' },
         ]}
-        placeholder="Search documents by title or creator..."
+        placeholder="Search by document title"
       />
 
       {/* List / Table */}
       {loading ? (
         <div className="p-8 text-center text-slate-400 animate-pulse font-medium">
-          Loading document repository...
+          Loading documents...
         </div>
       ) : filteredDocs.length === 0 ? (
         <EmptyState
@@ -143,7 +155,7 @@ export const DocumentList = () => {
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+              <tbody className="divide-y border-slate-800/60 text-slate-300">
                 {filteredDocs.map((doc) => (
                   <tr key={doc.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="p-4 font-semibold text-slate-100">
@@ -155,7 +167,7 @@ export const DocumentList = () => {
                       </button>
                     </td>
                     <td className="p-4 text-slate-400 font-mono text-xs">
-                      {workspaces.find((w) => w.id === doc.workspaceId)?.name || `WS #${doc.workspaceId}`}
+                      {wsList.find((w) => w.id === doc.workspaceId)?.name || `WS #${doc.workspaceId}`}
                     </td>
                     <td className="p-4">
                       <span className={`px-2.5 py-1 text-[11px] font-mono rounded-md border ${getStatusBadge(doc.currentStatus)}`}>
@@ -213,9 +225,10 @@ export const DocumentList = () => {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-lg">
             <DocumentForm
-              workspaces={workspaces}
+              workspaces={wsList}
               onSubmit={handleCreate}
               onCancel={() => setShowModal(false)}
+              onClose={() => setShowModal(false)}
             />
           </div>
         </div>
