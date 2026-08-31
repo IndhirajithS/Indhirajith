@@ -5,6 +5,7 @@ import documentReducer from './slices/documentSlice';
 import versionReducer from './slices/versionSlice';
 import reviewReducer from './slices/reviewSlice';
 import auditReducer from './slices/auditSlice';
+import notificationReducer from './slices/notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,7 +14,10 @@ export const store = configureStore({
     document: documentReducer,
     version: versionReducer,
     review: reviewReducer,
+    reviews: reviewReducer,
     audit: auditReducer,
+    notification: notificationReducer,
+    notifications: notificationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

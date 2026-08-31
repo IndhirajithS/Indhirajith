@@ -1,8 +1,21 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from '../../services/authService';
 
-const storedUser = authService.getCurrentUser();
-const storedToken = localStorage.getItem('token');
+const getInitialUser = () => {
+  try {
+    return authService.getCurrentUser();
+  } catch (e) {
+    return null;
+  }
+};
+
+const getInitialToken = () => {
+  try {
+    return authService.getToken() || localStorage.getItem('token') || null;
+  } catch (e) {
+    return null;
+  }
+};
 
 export const loginUser = createAsyncThunk(
   'auth/login',
@@ -30,20 +43,29 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+const initialToken = getInitialToken();
+const initialUser = getInitialUser();
+
 const initialState = {
-  user: storedUser,
-  token: storedToken,
-  isAuthenticated: !!storedToken,
+  user: initialUser || null,
+  token: initialToken || null,
+  isAuthenticated: !!initialToken,
   loading: false,
   error: null,
 };
 
-const authSlice = createSlice({
+export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
     logout: (state) => {
       authService.logout();
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } catch (e) {
+        // safe
+      }
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -63,7 +85,7 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.token = action.payload.token;
+        state.token = action.payload.token || null;
         state.user = action.payload;
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -78,7 +100,7 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.token = action.payload.token;
+        state.token = action.payload.token || null;
         state.user = action.payload;
       })
       .addCase(registerUser.rejected, (state, action) => {

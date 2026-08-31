@@ -20,13 +20,46 @@ export const authService = {
   },
 
   logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    } catch (e) {
+      // safe fallback
+    }
+  },
+
+  getToken: () => {
+    try {
+      return localStorage.getItem('token');
+    } catch (e) {
+      return null;
+    }
+  },
+
+  setToken: (token) => {
+    try {
+      localStorage.setItem('token', token);
+    } catch (e) {
+      // safe fallback
+    }
+  },
+
+  removeToken: () => {
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    } catch (e) {
+      // safe fallback
+    }
   },
 
   getCurrentUser: () => {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    try {
+      const userStr = localStorage.getItem('user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (e) {
+      return null;
+    }
   },
 
   getAllUsers: async () => {
