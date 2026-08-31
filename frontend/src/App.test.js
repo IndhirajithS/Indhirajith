@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -13,14 +13,13 @@ import DocumentForm from './components/document/DocumentForm';
 import NotificationStack from './components/NotificationStack';
 import SearchFilterBar from './components/common/SearchFilterBar';
 
-import authReducer, { logout, loginUser } from './store/slices/authSlice';
-import workspaceReducer, { fetchWorkspaces } from './store/slices/workspaceSlice';
-import documentReducer, { fetchDocuments } from './store/slices/documentSlice';
+import authReducer, { logout } from './store/slices/authSlice';
+import workspaceReducer from './store/slices/workspaceSlice';
+import documentReducer from './store/slices/documentSlice';
 import reviewReducer from './store/slices/reviewSlice';
 import notificationReducer, { addNotification } from './store/slices/notificationSlice';
 import auditReducer from './store/slices/auditSlice';
 import versionReducer from './store/slices/versionSlice';
-import store from './store';
 import authService from './services/authService';
 import documentService from './services/documentService';
 import workspaceService from './services/workspaceService';
@@ -127,7 +126,7 @@ describe('Frontend Verification Test Suite', () => {
   // T5 — DocumentList API fetch invocation
   test('T5 — DocumentList API fetch invocation', async () => {
     const getDocsSpy = jest.spyOn(documentService, 'getAll').mockResolvedValue([]);
-    const getWorkspacesSpy = jest.spyOn(workspaceService, 'getAll').mockResolvedValue([]);
+    jest.spyOn(workspaceService, 'getAll').mockResolvedValue([]);
 
     const testStore = createTestStore({
       auth: {
@@ -151,7 +150,10 @@ describe('Frontend Verification Test Suite', () => {
   });
 
   // T6 — Guest restrictions: Missing New Document button
-  test('T6 — Guest restrictions: Missing New Document button', () => {
+  test('T6 — Guest restrictions: Missing New Document button', async () => {
+    jest.spyOn(documentService, 'getAll').mockResolvedValue([]);
+    jest.spyOn(workspaceService, 'getAll').mockResolvedValue([]);
+
     const testStore = createTestStore({
       auth: {
         isAuthenticated: true,
@@ -170,6 +172,10 @@ describe('Frontend Verification Test Suite', () => {
 
     const newDocButton = screen.queryByRole('button', { name: /New Document/i });
     expect(newDocButton).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /New Document/i })).not.toBeInTheDocument();
+    });
   });
 
   // T7 — Form state: Title input reactivity
@@ -318,7 +324,10 @@ describe('Frontend Verification Test Suite', () => {
   });
 
   // T15 — Filter dropdown status options
-  test('T15 — Filter dropdown status options', () => {
+  test('T15 — Filter dropdown status options', async () => {
+    jest.spyOn(documentService, 'getAll').mockResolvedValue([]);
+    jest.spyOn(workspaceService, 'getAll').mockResolvedValue([]);
+
     const testStore = createTestStore({
       auth: {
         isAuthenticated: true,
@@ -345,6 +354,10 @@ describe('Frontend Verification Test Suite', () => {
     expect(options).toContain('IN_REVIEW');
     expect(options).toContain('APPROVED');
     expect(options).toContain('REJECTED');
+
+    await waitFor(() => {
+      expect(select).toBeInTheDocument();
+    });
   });
 
   // T16 — Application shell NotificationStack check
@@ -474,7 +487,10 @@ describe('Frontend Verification Test Suite', () => {
   });
 
   // T22 — DocumentList empty data view
-  test('T22 — DocumentList empty data view', () => {
+  test('T22 — DocumentList empty data view', async () => {
+    jest.spyOn(documentService, 'getAll').mockResolvedValue([]);
+    jest.spyOn(workspaceService, 'getAll').mockResolvedValue([]);
+
     const testStore = createTestStore({
       auth: {
         isAuthenticated: true,
@@ -499,7 +515,9 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    expect(screen.getByText('No Documents Found')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('No Documents Found')).toBeInTheDocument();
+    });
   });
 
   // T23 — DocumentForm submit button role
@@ -536,6 +554,9 @@ describe('Frontend Verification Test Suite', () => {
 
   // T25 — DocumentList loading spinner visibility
   test('T25 — DocumentList loading spinner visibility', () => {
+    jest.spyOn(documentService, 'getAll').mockReturnValue(new Promise(() => {}));
+    jest.spyOn(workspaceService, 'getAll').mockReturnValue(new Promise(() => {}));
+
     const testStore = createTestStore({
       auth: {
         isAuthenticated: true,
