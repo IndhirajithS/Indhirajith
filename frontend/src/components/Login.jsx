@@ -36,7 +36,7 @@ export const Login = () => {
     <div className="min-h-[80vh] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-slate-900/80 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl shadow-lg text-2xl text-white mb-2">
+          <div className="inline-flex p-3 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl shadow-lg text-2xl text-white mb-2" data-testid="login-logo">
             ⚡
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
@@ -53,8 +53,10 @@ export const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">Username</label>
+            <label htmlFor="username" className="block text-xs font-medium text-slate-300 mb-1.5">Username</label>
             <input
+              id="username"
+              name="username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -66,8 +68,10 @@ export const Login = () => {
 
           {isRegister && (
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">Email Address</label>
+              <label htmlFor="email" className="block text-xs font-medium text-slate-300 mb-1.5">Email Address</label>
               <input
+                id="email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -79,8 +83,10 @@ export const Login = () => {
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">Password</label>
+            <label htmlFor="password" className="block text-xs font-medium text-slate-300 mb-1.5">Password</label>
             <input
+              id="password"
+              name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -92,8 +98,10 @@ export const Login = () => {
 
           {isRegister && (
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">Role Authorization</label>
+              <label htmlFor="role" className="block text-xs font-medium text-slate-300 mb-1.5">Role Authorization</label>
               <select
+                id="role"
+                name="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
@@ -113,6 +121,16 @@ export const Login = () => {
             {loading ? 'Authenticating...' : isRegister ? 'Register Account' : 'Sign In'}
           </button>
         </form>
+
+        {/* Demo Accounts Hint */}
+        <div className="text-xs text-slate-400 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-1.5" data-testid="demo-accounts-hint">
+          <p className="font-semibold text-slate-300">Demo Accounts</p>
+          <div className="flex flex-col gap-1 text-[11px]">
+            <div><span className="text-slate-400">Director:</span> <span className="font-mono text-indigo-300">director_user</span> / <span className="font-mono text-indigo-300">password123</span></div>
+            <div><span className="text-slate-400">Creator:</span> <span className="font-mono text-indigo-300">creator_user</span> / <span className="font-mono text-indigo-300">password123</span></div>
+            <div><span className="text-slate-400">Reviewer:</span> <span className="font-mono text-indigo-300">reviewer_user</span> / <span className="font-mono text-indigo-300">password123</span></div>
+          </div>
+        </div>
 
         <div className="text-center pt-2 border-t border-slate-800">
           <button
