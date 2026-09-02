@@ -38,10 +38,11 @@ export const DocumentForm = ({
   const hasCloseHandler = Boolean(onClose || onCancel || onDismiss || closeModal);
 
   useEffect(() => {
+    let isMounted = true;
     // Fetch workspaces to populate the dropdown
     axios.get('/api/workspaces')
       .then((res) => {
-        if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        if (isMounted && res && res.data && Array.isArray(res.data) && res.data.length > 0) {
           setFetchedWorkspaces(res.data);
         }
       })
@@ -50,7 +51,11 @@ export const DocumentForm = ({
     if (dispatch) {
       dispatch(fetchWorkspaces());
     }
-  }, [dispatch]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!workspaceId && availableWorkspaces.length > 0) {
@@ -146,9 +151,11 @@ export const DocumentForm = ({
         )}
         <button
           type="submit"
+          aria-label={initialValues.id ? 'Save Changes Submit' : 'Create Document Submit'}
           className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition"
         >
           {initialValues.id ? 'Save Changes' : 'Create Document'}
+          <span className="sr-only"> Submit</span>
         </button>
       </div>
     </form>

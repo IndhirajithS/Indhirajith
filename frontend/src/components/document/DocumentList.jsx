@@ -34,7 +34,7 @@ export const DocumentList = () => {
       dispatch(fetchDocuments());
       dispatch(fetchWorkspaces());
     }
-  }, [dispatch]);
+  }, []);
 
   const handleCreate = (data) => {
     dispatch(createDocument(data)).then(() => {
@@ -89,6 +89,8 @@ export const DocumentList = () => {
     }
   };
 
+  const canCreate = user?.role === 'CONTENT_CREATOR' || user?.role === 'PROJECT_DIRECTOR';
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -101,7 +103,7 @@ export const DocumentList = () => {
             Create, version control, submit for quality review, and manage documents across workspaces.
           </p>
         </div>
-        {(user?.role === 'CONTENT_CREATOR' || user?.role === 'PROJECT_DIRECTOR') && (
+        {canCreate && (
           <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition flex items-center gap-1.5 self-start sm:self-auto"
@@ -137,8 +139,8 @@ export const DocumentList = () => {
           icon="📄"
           title="No Documents Found"
           description="No documents match your query or none have been created yet."
-          actionLabel="Create Document"
-          onAction={() => setShowModal(true)}
+          actionLabel={canCreate ? "Create Document" : undefined}
+          onAction={canCreate ? () => setShowModal(true) : undefined}
         />
       ) : (
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md">
