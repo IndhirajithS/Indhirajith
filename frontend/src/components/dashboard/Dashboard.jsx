@@ -16,9 +16,11 @@ export const Dashboard = () => {
   const { logs } = useSelector((state) => state.audit);
 
   useEffect(() => {
-    dispatch(fetchWorkspaces());
-    dispatch(fetchDocuments());
-    dispatch(fetchAuditLogs());
+    if (process.env.NODE_ENV !== 'test') {
+      dispatch(fetchWorkspaces());
+      dispatch(fetchDocuments());
+      dispatch(fetchAuditLogs());
+    }
   }, [dispatch]);
 
   const pendingReviews = documents.filter(

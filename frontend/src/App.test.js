@@ -1,7 +1,13 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter as RouterMemoryRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
+
+const MemoryRouter = ({ future, ...props }) => (
+  <RouterMemoryRouter
+    future={{ v7_startTransition: true, v7_relativeSplatPath: true, ...future }}
+    {...props}
+  />
+);
 import { configureStore } from '@reduxjs/toolkit';
 import axios from 'axios';
 
