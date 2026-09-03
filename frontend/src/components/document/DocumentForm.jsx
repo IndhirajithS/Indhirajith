@@ -11,39 +11,49 @@ const DocumentForm = ({ existingDocument, onClose }) => {
   const { items: workspaces } = useSelector((state) => state.workspaces);
   const isEditing = !!existingDocument;
 
+  // T8: Async Workspace fetching on Form mount
   useEffect(() => {
-    // T8: Dispatches fetchWorkspaces exactly on mount
     dispatch(fetchWorkspaces());
   }, [dispatch]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      if (isEditing) {
-        await dispatch(updateDocument({ id: existingDocument.id, dto: { title } })).unwrap();
-      } else {
-        await dispatch(createDocument({ title, workspaceId })).unwrap();
+    
+    const action = isEditing 
+      ? updateDocument({ id: existingDocument.id, dto: { title } }) 
+      : createDocument({ title, workspaceId });
+
+    // T9: Modal dismissal callback execution (Safe Promise Resolution)
+    dispatch(action).then((response) => {
+      if (!response.error && onClose) {
+        onClose();
       }
-      // T9: Executes dismissal callback immediately upon successful resolution
-      if (onClose) onClose();
-    } catch (error) {
-      console.error("Submission failed", error);
-    }
+    });
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <div>
         <label htmlFor="doc-title">Title</label>
-        <input id="doc-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <input 
+          id="doc-title" 
+          value={title} 
+          onChange={(e) => setTitle(e.target.value)} 
+          required 
+        />
       </div>
 
       {!isEditing && (
         <div>
           <label htmlFor="doc-workspace">Workspace</label>
-          <select id="doc-workspace" value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} required>
+          <select 
+            id="doc-workspace" 
+            value={workspaceId} 
+            onChange={(e) => setWorkspaceId(e.target.value)} 
+            required
+          >
             <option value="" disabled>Select Workspace</option>
-            {workspaces?.map((ws) => (
+            {workspaces && workspaces.map((ws) => (
               <option key={ws.id} value={ws.id}>{ws.name}</option>
             ))}
           </select>

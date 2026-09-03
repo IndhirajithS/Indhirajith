@@ -1,7 +1,7 @@
 import React from 'react';
 
 const SearchFilterBar = ({ searchValue, onSearchChange, statusValue, onStatusChange, onClear }) => {
-  const isFilterActive = searchValue || (statusValue && statusValue !== 'All Statuses');
+  const isFilterActive = searchValue || (statusValue && statusValue !== '');
 
   return (
     <div className="search-filter-bar">
@@ -14,13 +14,13 @@ const SearchFilterBar = ({ searchValue, onSearchChange, statusValue, onStatusCha
         onChange={onSearchChange}
       />
 
-      {/* T15: Exact option values and text mappings */}
+      {/* T15: Filter dropdown status options with empty default value */}
       <select 
         id="search-filter-status" 
-        value={statusValue || 'All Statuses'} 
+        value={statusValue || ''} 
         onChange={onStatusChange}
       >
-        <option value="All Statuses">All Statuses</option>
+        <option value="">All Statuses</option>
         <option value="DRAFT">DRAFT</option>
         <option value="IN_REVIEW">IN_REVIEW</option>
         <option value="APPROVED">APPROVED</option>
