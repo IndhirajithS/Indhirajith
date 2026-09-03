@@ -34,7 +34,7 @@ export const DocumentList = () => {
       dispatch(fetchDocuments());
       dispatch(fetchWorkspaces());
     }
-  }, []);
+  }, [dispatch]);
 
   const handleCreate = (data) => {
     dispatch(createDocument(data)).then(() => {
