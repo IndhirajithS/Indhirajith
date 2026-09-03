@@ -204,7 +204,7 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    const titleInput = screen.getByLabelText(/Document Title/i);
+    const titleInput = screen.getByLabelText(/Title/i);
     expect(titleInput.value).toBe('');
 
     fireEvent.change(titleInput, { target: { value: 'New Test Document Title' } });
@@ -447,8 +447,8 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    expect(screen.getByLabelText(/Document Title/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Target Workspace/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Title/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Workspace/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Create Document/i })).toBeInTheDocument();
   });
 
