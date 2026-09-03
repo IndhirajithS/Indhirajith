@@ -22,10 +22,12 @@ export const DocumentList = () => {
 
   const { documents, loading } = useSelector((state) => state.document || state.documents || {});
   const { workspaces } = useSelector((state) => state.workspace || state.workspaces || {});
-  const { user } = useSelector((state) => state.auth || {});
+  const { role: directRole, user } = useSelector((state) => state.auth || {});
+  const role = directRole || user?.role;
+  const openNewDocumentModal = () => setShowModal(true);
 
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('All Statuses');
+  const [filterStatus, setFilterStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -72,6 +74,7 @@ export const DocumentList = () => {
 
   const filteredDocs = docList.filter((doc) => {
     const statusMatch =
+      !filterStatus ||
       filterStatus === 'ALL' ||
       filterStatus === 'All Statuses' ||
       doc.currentStatus === filterStatus;
@@ -101,9 +104,7 @@ export const DocumentList = () => {
     }
   };
 
-  const canCreate =
-    user?.role !== 'GUEST_OBSERVER' &&
-    (user?.role === 'CONTENT_CREATOR' || user?.role === 'PROJECT_DIRECTOR');
+  const canCreate = role === 'CONTENT_CREATOR' || role === 'PROJECT_DIRECTOR';
 
   return (
     <div className="space-y-6">
@@ -117,13 +118,13 @@ export const DocumentList = () => {
             Create, version control, submit for quality review, and manage documents across workspaces.
           </p>
         </div>
-        {canCreate && (
+        {(role === 'CONTENT_CREATOR' || role === 'PROJECT_DIRECTOR') && (
           <button
             id="btn-new-document"
-            onClick={() => setShowModal(true)}
+            onClick={openNewDocumentModal}
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition flex items-center gap-1.5 self-start sm:self-auto"
           >
-            <span>+</span> New Document
+            + New Document
           </button>
         )}
       </div>
