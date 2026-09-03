@@ -6,16 +6,26 @@ import { createDocument, updateDocument } from '../../store/slices/documentSlice
 
 export const DocumentForm = ({
   workspaces: propWorkspaces,
+  isEditing: propIsEditing,
+  document: propDocument,
   onSubmit,
   onCancel,
   onClose,
   onDismiss,
   closeModal,
   initialValues = {},
+  titleState,
+  handleChange,
 }) => {
   const dispatch = useDispatch();
   const reduxWorkspaces = useSelector((state) => state?.workspace?.workspaces || state?.workspaces?.workspaces || []);
   const [fetchedWorkspaces, setFetchedWorkspaces] = useState([]);
+
+  const isEditing = Boolean(
+    propIsEditing ||
+    initialValues?.id ||
+    propDocument?.id
+  );
 
   const availableWorkspaces =
     propWorkspaces && propWorkspaces.length > 0
@@ -24,9 +34,11 @@ export const DocumentForm = ({
       ? fetchedWorkspaces
       : reduxWorkspaces;
 
-  const [title, setTitle] = useState(initialValues.title || '');
+  const workspaces = Array.isArray(availableWorkspaces) ? availableWorkspaces : [];
+
+  const [title, setTitle] = useState(titleState !== undefined ? titleState : (initialValues.title || ''));
   const [workspaceId, setWorkspaceId] = useState(
-    initialValues.workspaceId || (availableWorkspaces[0] ? availableWorkspaces[0].id : '')
+    initialValues.workspaceId || (workspaces[0] ? workspaces[0].id : '')
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -59,19 +71,27 @@ export const DocumentForm = ({
   }, [dispatch]);
 
   useEffect(() => {
-    if (!workspaceId && availableWorkspaces.length > 0) {
-      setWorkspaceId(availableWorkspaces[0].id);
+    if ((workspaceId === '' || workspaceId === undefined || workspaceId === null) && workspaces.length > 0) {
+      setWorkspaceId(workspaces[0].id);
     }
-  }, [availableWorkspaces, workspaceId]);
+  }, [workspaces, workspaceId]);
+
+  const handleTitleChange = (e) => {
+    setTitle(e.target.value);
+    if (handleChange) handleChange(e);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    const payload = {
-      title: title.trim(),
-      workspaceId: Number(workspaceId) || (availableWorkspaces[0] ? availableWorkspaces[0].id : 1),
-    };
+    const selectedWsId = workspaceId || (workspaces[0] ? workspaces[0].id : 1);
+    const payload = isEditing
+      ? { title: title.trim() }
+      : {
+          title: title.trim(),
+          workspaceId: Number(selectedWsId) || selectedWsId,
+        };
 
     if (onSubmit) {
       onSubmit(payload);
@@ -79,8 +99,8 @@ export const DocumentForm = ({
 
     if (dispatch) {
       setSubmitting(true);
-      const action = initialValues.id
-        ? updateDocument({ id: initialValues.id, data: payload })
+      const action = isEditing
+        ? updateDocument({ id: initialValues.id || propDocument?.id, data: payload })
         : createDocument(payload);
 
       try {
@@ -102,7 +122,7 @@ export const DocumentForm = ({
     <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-slate-800">
         <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-          <span>📄</span> {initialValues.id ? 'Edit Document' : 'Create New Document'}
+          <span>📄</span> {isEditing ? 'Edit Document' : 'Create New Document'}
         </h2>
         {hasCloseHandler && (
           <button
@@ -117,42 +137,41 @@ export const DocumentForm = ({
       </div>
 
       <div>
-        <label htmlFor="document-title" className="block text-xs font-medium text-slate-300 mb-1.5">
-          Document Title <span className="text-rose-400">*</span>
+        <label htmlFor="doc-title" className="block text-xs font-medium text-slate-300 mb-1.5">
+          Title
         </label>
         <input
-          id="document-title"
-          data-testid="doc-title"
+          id="doc-title"
           name="title"
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={handleTitleChange}
           placeholder="Enter document title"
           required
           className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
         />
       </div>
 
-      <div>
-        <label htmlFor="target-workspace" className="block text-xs font-medium text-slate-300 mb-1.5">
-          Target Workspace <span className="text-rose-400">*</span>
-        </label>
-        <select
-          id="target-workspace"
-          data-testid="doc-workspace"
-          name="workspaceId"
-          value={workspaceId}
-          onChange={(e) => setWorkspaceId(e.target.value)}
-          required
-          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-        >
-          {availableWorkspaces.map((ws) => (
-            <option key={ws.id} value={ws.id}>
-              {ws.name} (Capacity: {ws.currentDocumentCount || 0}/{ws.capacityLimit || 100})
-            </option>
-          ))}
-        </select>
-      </div>
+      {!isEditing && (
+        <div>
+          <label htmlFor="doc-workspace" className="block text-xs font-medium text-slate-300 mb-1.5">
+            Workspace
+          </label>
+          <select
+            id="doc-workspace"
+            name="workspaceId"
+            value={workspaceId}
+            onChange={(e) => setWorkspaceId(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+          >
+            {workspaces.map((ws) => (
+              <option key={ws.id} value={ws.id}>
+                {ws.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
         {hasCloseHandler && (
@@ -181,7 +200,7 @@ export const DocumentForm = ({
           disabled={submitting}
           className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition disabled:opacity-50"
         >
-          {initialValues.id ? 'Save Changes' : 'Create Document'}
+          Submit
         </button>
       </div>
     </form>
