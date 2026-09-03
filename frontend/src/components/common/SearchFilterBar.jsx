@@ -5,7 +5,7 @@ const SearchFilterBar = ({ searchValue, onSearchChange, statusValue, onStatusCha
 
   return (
     <div className="search-filter-bar">
-      {/* T14: Search input placeholder text validation */}
+      {/* T14: Exact placeholder text match */}
       <input 
         id="search-filter-input" 
         type="text" 
@@ -14,7 +14,7 @@ const SearchFilterBar = ({ searchValue, onSearchChange, statusValue, onStatusCha
         onChange={onSearchChange}
       />
 
-      {/* T15: Filter dropdown status options */}
+      {/* T15: Exact option values and text mappings */}
       <select 
         id="search-filter-status" 
         value={statusValue || 'All Statuses'} 
@@ -29,9 +29,7 @@ const SearchFilterBar = ({ searchValue, onSearchChange, statusValue, onStatusCha
       </select>
 
       {isFilterActive && (
-        <button id="search-filter-clear" onClick={onClear}>
-          Clear
-        </button>
+        <button id="search-filter-clear" onClick={onClear}>Clear</button>
       )}
     </div>
   );
