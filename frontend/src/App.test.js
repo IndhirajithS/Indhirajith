@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter as RouterMemoryRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
