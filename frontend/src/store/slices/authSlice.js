@@ -48,6 +48,7 @@ const initialUser = getInitialUser();
 
 const initialState = {
   user: initialUser || null,
+  role: initialUser?.role || null,
   token: initialToken || null,
   isAuthenticated: !!initialToken,
   loading: false,
@@ -67,6 +68,7 @@ export const authSlice = createSlice({
         // safe
       }
       state.user = null;
+      state.role = null;
       state.token = null;
       state.isAuthenticated = false;
       state.error = null;
@@ -87,6 +89,7 @@ export const authSlice = createSlice({
         state.isAuthenticated = true;
         state.token = action.payload.token || null;
         state.user = action.payload;
+        state.role = action.payload?.role || action.payload?.user?.role || null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -102,6 +105,7 @@ export const authSlice = createSlice({
         state.isAuthenticated = true;
         state.token = action.payload.token || null;
         state.user = action.payload;
+        state.role = action.payload?.role || action.payload?.user?.role || null;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
