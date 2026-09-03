@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import axios from 'axios';
-import { fetchWorkspaces } from '../../store/slices/workspaceSlice';
 
 export const DocumentForm = ({
   workspaces: propWorkspaces,
@@ -12,7 +11,6 @@ export const DocumentForm = ({
   closeModal,
   initialValues = {},
 }) => {
-  const dispatch = useDispatch();
   const reduxWorkspaces = useSelector((state) => state?.workspace?.workspaces || state?.workspaces?.workspaces || []);
   const [fetchedWorkspaces, setFetchedWorkspaces] = useState([]);
 
