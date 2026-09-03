@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { fetchWorkspaces } from '../../store/slices/workspaceSlice';
@@ -27,14 +27,15 @@ export const DocumentForm = ({
     propDocument?.id
   );
 
-  const availableWorkspaces =
-    propWorkspaces && propWorkspaces.length > 0
-      ? propWorkspaces
-      : fetchedWorkspaces.length > 0
-      ? fetchedWorkspaces
-      : reduxWorkspaces;
-
-  const workspaces = Array.isArray(availableWorkspaces) ? availableWorkspaces : [];
+  const workspaces = useMemo(() => {
+    const available =
+      propWorkspaces && propWorkspaces.length > 0
+        ? propWorkspaces
+        : fetchedWorkspaces.length > 0
+        ? fetchedWorkspaces
+        : reduxWorkspaces;
+    return Array.isArray(available) ? available : [];
+  }, [propWorkspaces, fetchedWorkspaces, reduxWorkspaces]);
 
   const [title, setTitle] = useState(titleState !== undefined ? titleState : (initialValues.title || ''));
   const [workspaceId, setWorkspaceId] = useState(
