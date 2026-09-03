@@ -117,11 +117,12 @@ export const DocumentForm = ({
       </div>
 
       <div>
-        <label htmlFor="doc-title" className="block text-xs font-medium text-slate-300 mb-1.5">
-          Title <span className="text-rose-400">*</span>
+        <label htmlFor="document-title" className="block text-xs font-medium text-slate-300 mb-1.5">
+          Document Title <span className="text-rose-400">*</span>
         </label>
         <input
-          id="doc-title"
+          id="document-title"
+          data-testid="doc-title"
           name="title"
           type="text"
           value={title}
@@ -133,11 +134,12 @@ export const DocumentForm = ({
       </div>
 
       <div>
-        <label htmlFor="doc-workspace" className="block text-xs font-medium text-slate-300 mb-1.5">
-          Workspace <span className="text-rose-400">*</span>
+        <label htmlFor="target-workspace" className="block text-xs font-medium text-slate-300 mb-1.5">
+          Target Workspace <span className="text-rose-400">*</span>
         </label>
         <select
-          id="doc-workspace"
+          id="target-workspace"
+          data-testid="doc-workspace"
           name="workspaceId"
           value={workspaceId}
           onChange={(e) => setWorkspaceId(e.target.value)}
