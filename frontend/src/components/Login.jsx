@@ -1,36 +1,54 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, registerUser } from '../store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
+import { loginUser, registerUser, clearError } from '../store/slices/authSlice';
 import ErrorHandler from './ErrorHandler';
 
 export const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth || {});
 
-  const [isRegister, setIsRegister] = useState(false);
+  const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('CONTENT_CREATOR');
+  const [validationError, setValidationError] = useState('');
+
+  const handleToggleMode = () => {
+    setMode((prev) => (prev === 'login' ? 'register' : 'login'));
+    setValidationError('');
+    if (dispatch && clearError) {
+      dispatch(clearError());
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isRegister) {
-      dispatch(registerUser({ username, email, password, role })).then((res) => {
-        if (!res.error) {
-          navigate('/dashboard');
+    setValidationError('');
+
+    if (password.length < 8) {
+      setValidationError('Password must be at least 8 characters long');
+      return;
+    }
+
+    if (mode === 'login') {
+      dispatch(loginUser({ username, password })).then((res) => {
+        if (!res?.error) {
+          navigate('/');
         }
       });
     } else {
-      dispatch(loginUser({ username, password })).then((res) => {
-        if (!res.error) {
-          navigate('/dashboard');
+      dispatch(registerUser({ username, email, password, role })).then((res) => {
+        if (!res?.error) {
+          navigate('/');
         }
       });
     }
   };
+
+  const currentError = validationError || error;
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
@@ -43,24 +61,31 @@ export const Login = () => {
             DD
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            {isRegister ? 'Create DraftDash Account' : 'Sign in to DraftDash'}
+            {mode === 'register' ? 'Create DraftDash Account' : 'Sign in to DraftDash'}
           </h1>
           <p className="text-xs text-slate-400">
-            {isRegister
+            {mode === 'register'
               ? 'Join workspace collaboration and quality document review'
               : 'Sign in with your credentials to access system resources'}
           </p>
         </div>
 
-        <ErrorHandler error={error} />
+        {currentError && (
+          <div className="form-error-banner">
+            <ErrorHandler error={currentError} />
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label
+              htmlFor="login-username"
+              className="block text-xs font-medium text-slate-300 mb-1.5"
+            >
               Username
             </label>
             <input
-              id="username"
+              id="login-username"
               name="username"
               type="text"
               value={username}
@@ -71,13 +96,16 @@ export const Login = () => {
             />
           </div>
 
-          {isRegister && (
+          {mode === 'register' && (
             <div>
-              <label htmlFor="email" className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label
+                htmlFor="login-email"
+                className="block text-xs font-medium text-slate-300 mb-1.5"
+              >
                 Email Address
               </label>
               <input
-                id="email"
+                id="login-email"
                 name="email"
                 type="email"
                 value={email}
@@ -90,11 +118,14 @@ export const Login = () => {
           )}
 
           <div>
-            <label htmlFor="password" className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label
+              htmlFor="login-password"
+              className="block text-xs font-medium text-slate-300 mb-1.5"
+            >
               Password
             </label>
             <input
-              id="password"
+              id="login-password"
               name="password"
               type="password"
               value={password}
@@ -105,13 +136,16 @@ export const Login = () => {
             />
           </div>
 
-          {isRegister && (
+          {mode === 'register' && (
             <div>
-              <label htmlFor="role" className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label
+                htmlFor="login-role"
+                className="block text-xs font-medium text-slate-300 mb-1.5"
+              >
                 Role Authorization
               </label>
               <select
-                id="role"
+                id="login-role"
                 name="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
@@ -119,22 +153,31 @@ export const Login = () => {
               >
                 <option value="CONTENT_CREATOR">Content Creator</option>
                 <option value="QUALITY_REVIEWER">Quality Reviewer</option>
+                <option value="GUEST_OBSERVER">Guest Observer</option>
                 <option value="PROJECT_DIRECTOR">Project Director</option>
               </select>
             </div>
           )}
 
           <button
+            id="login-submit"
             type="submit"
             disabled={loading}
             className="w-full py-3 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg transition active:scale-98 disabled:bg-slate-800"
           >
-            {loading ? 'Authenticating...' : isRegister ? 'Register Account' : 'Sign In'}
+            {loading
+              ? 'Please wait...'
+              : mode === 'register'
+              ? 'Register Account'
+              : 'Sign In'}
           </button>
         </form>
 
         {/* Demo Accounts Hint */}
-        <div className="text-xs text-slate-400 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-1.5" data-testid="demo-accounts-hint">
+        <div
+          className="text-xs text-slate-400 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-1.5"
+          data-testid="demo-accounts-hint"
+        >
           <p className="font-semibold text-slate-300">Demo accounts:</p>
           <div className="flex flex-col gap-1 text-[11px]">
             <div>
@@ -157,10 +200,13 @@ export const Login = () => {
 
         <div className="text-center pt-2 border-t border-slate-800">
           <button
-            onClick={() => setIsRegister(!isRegister)}
+            type="button"
+            onClick={handleToggleMode}
             className="text-xs text-slate-400 hover:text-indigo-400 font-medium transition"
           >
-            {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Register"}
+            {mode === 'register'
+              ? 'Already have an account? Sign in'
+              : "Don't have an account? Register"}
           </button>
         </div>
       </div>
