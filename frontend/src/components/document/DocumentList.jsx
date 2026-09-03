@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import { fetchDocuments } from '../../store/slices/documentSlice'; 
+import EmptyState from '../common/EmptyState'; // Ensure this matches your path
 
 const DocumentList = () => {
   const dispatch = useDispatch();
@@ -9,7 +10,6 @@ const DocumentList = () => {
   const workspaceId = searchParams.get('workspaceId'); 
   
   const { role } = useSelector((state) => state.auth);
-  // Pull loading state from Redux
   const { items: documents, loading } = useSelector((state) => state.documents);
 
   useEffect(() => {
@@ -26,9 +26,9 @@ const DocumentList = () => {
       </div>
 
       <div className="document-list">
-        {/* T25: Conditionally render loading spinner/text before data maps */}
+        {/* T25: Explicit loading text check */}
         {loading ? (
-          <div className="loading-spinner">Loading...</div>
+          <div>Loading...</div>
         ) : documents && documents.length > 0 ? (
           <ul>
             {documents.map((doc) => (
@@ -36,7 +36,7 @@ const DocumentList = () => {
             ))}
           </ul>
         ) : (
-          <div className="empty-state">No documents found</div>
+          <EmptyState title="No documents found" />
         )}
       </div>
     </div>
