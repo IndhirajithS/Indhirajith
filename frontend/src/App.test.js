@@ -710,6 +710,7 @@ describe('Frontend Verification Test Suite', () => {
 
   // Supplementary test: T9 dismissal on form submit success & isEditing conditional workspace
   test('T9 & isEditing — Modal dismissal on successful submit and workspace hidden on edit', async () => {
+    jest.spyOn(axios, 'post').mockResolvedValue({ data: { id: 1, title: 'Created Document' } });
     const handleClose = jest.fn();
     const testStore = createTestStore({
       workspace: { workspaces: [{ id: 1, name: 'Workspace 1' }] },
