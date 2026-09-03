@@ -63,7 +63,7 @@ export const authService = {
   },
 
   getAllUsers: async () => {
-    const response = await api.get('/auth/users');
+    const response = await api.get('/api/auth/users');
     return response.data;
   },
 };
