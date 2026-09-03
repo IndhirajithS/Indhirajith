@@ -39,23 +39,20 @@ export const DocumentForm = ({
 
   useEffect(() => {
     let isMounted = true;
-    // Fetch workspaces to populate the dropdown
-    axios.get('/api/workspaces')
-      .then((res) => {
-        if (isMounted && res && res.data && Array.isArray(res.data) && res.data.length > 0) {
-          setFetchedWorkspaces(res.data);
-        }
-      })
-      .catch(console.error);
-
-    if (dispatch) {
-      dispatch(fetchWorkspaces());
+    if (!propWorkspaces || propWorkspaces.length === 0) {
+      axios.get('/api/workspaces')
+        .then((res) => {
+          if (isMounted && res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+            setFetchedWorkspaces(res.data);
+          }
+        })
+        .catch(() => {});
     }
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [propWorkspaces]);
 
   useEffect(() => {
     if (!workspaceId && availableWorkspaces.length > 0) {
