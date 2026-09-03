@@ -3,9 +3,15 @@ import documentService from '../../services/documentService';
 
 export const fetchDocuments = createAsyncThunk(
   'document/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async (param, { rejectWithValue }) => {
     try {
-      const data = await documentService.getAll();
+      const params =
+        typeof param === 'object' && param !== null
+          ? param
+          : param
+          ? { workspaceId: param }
+          : undefined;
+      const data = await documentService.getAll(params);
       return data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch documents');

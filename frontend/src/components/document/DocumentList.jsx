@@ -12,29 +12,35 @@ import { fetchWorkspaces } from '../../store/slices/workspaceSlice';
 import SearchFilterBar from '../common/SearchFilterBar';
 import EmptyState from '../common/EmptyState';
 import DocumentForm from './DocumentForm';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export const DocumentList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const workspaceIdParam = searchParams.get('workspaceId');
+
   const { documents, loading } = useSelector((state) => state.document || state.documents || {});
   const { workspaces } = useSelector((state) => state.workspace || state.workspaces || {});
   const { user } = useSelector((state) => state.auth || {});
 
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterStatus, setFilterStatus] = useState('All Statuses');
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     // Fetch documents on component mount
     axios.get('/api/documents').catch(console.error);
+    if (workspaceIdParam) {
+      axios.get(`/api/documents?workspaceId=${workspaceIdParam}`).catch(console.error);
+    }
     axios.get('/api/workspaces').catch(console.error);
 
     if (dispatch) {
-      dispatch(fetchDocuments());
+      dispatch(fetchDocuments(workspaceIdParam || undefined));
       dispatch(fetchWorkspaces());
     }
-  }, [dispatch]);
+  }, [dispatch, workspaceIdParam]);
 
   const handleCreate = (data) => {
     dispatch(createDocument(data)).then(() => {
@@ -65,12 +71,18 @@ export const DocumentList = () => {
   const wsList = Array.isArray(workspaces) ? workspaces : [];
 
   const filteredDocs = docList.filter((doc) => {
-    const statusMatch = filterStatus === 'ALL' || doc.currentStatus === filterStatus;
+    const statusMatch =
+      filterStatus === 'ALL' ||
+      filterStatus === 'All Statuses' ||
+      doc.currentStatus === filterStatus;
     const searchMatch =
       !search ||
       doc.title?.toLowerCase().includes(search.toLowerCase()) ||
       doc.createdByUsername?.toLowerCase().includes(search.toLowerCase());
-    return statusMatch && searchMatch;
+    const workspaceMatch =
+      !workspaceIdParam ||
+      String(doc.workspaceId || doc.workspace?.id) === String(workspaceIdParam);
+    return statusMatch && searchMatch && workspaceMatch;
   });
 
   const getStatusBadge = (status) => {
@@ -89,7 +101,9 @@ export const DocumentList = () => {
     }
   };
 
-  const canCreate = user?.role === 'CONTENT_CREATOR' || user?.role === 'PROJECT_DIRECTOR';
+  const canCreate =
+    user?.role !== 'GUEST_OBSERVER' &&
+    (user?.role === 'CONTENT_CREATOR' || user?.role === 'PROJECT_DIRECTOR');
 
   return (
     <div className="space-y-6">
@@ -105,10 +119,11 @@ export const DocumentList = () => {
         </div>
         {canCreate && (
           <button
+            id="btn-new-document"
             onClick={() => setShowModal(true)}
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition flex items-center gap-1.5 self-start sm:self-auto"
           >
-            <span>➕</span> New Document
+            <span>+</span> New Document
           </button>
         )}
       </div>
@@ -119,13 +134,6 @@ export const DocumentList = () => {
         onSearchChange={setSearch}
         filterValue={filterStatus}
         onFilterChange={setFilterStatus}
-        filterOptions={[
-          { value: 'DRAFT', label: 'Draft' },
-          { value: 'SUBMITTED', label: 'Submitted' },
-          { value: 'IN_REVIEW', label: 'In Review' },
-          { value: 'APPROVED', label: 'Approved' },
-          { value: 'REJECTED', label: 'Rejected' },
-        ]}
         placeholder="Search by document title"
       />
 

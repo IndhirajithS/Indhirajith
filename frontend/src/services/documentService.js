@@ -2,12 +2,14 @@ import axios from 'axios';
 import api from './api';
 
 export const documentService = {
-  getAll: async () => {
+  getAll: async (params) => {
     try {
-      const response = await axios.get('/api/documents');
+      const config = params ? { params: typeof params === 'object' ? params : { workspaceId: params } } : {};
+      const response = await axios.get('/api/documents', config);
       return response.data;
     } catch (e) {
-      const response = await api.get('/documents');
+      const config = params ? { params: typeof params === 'object' ? params : { workspaceId: params } } : {};
+      const response = await api.get('/documents', config);
       return response.data;
     }
   },
