@@ -624,9 +624,9 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    const titleInput = screen.getByLabelText(/Document Title/i);
+    const titleInput = screen.getByLabelText(/^Title$/i);
     expect(titleInput).toBeInTheDocument();
-    expect(titleInput).toHaveAttribute('id', 'document-title');
+    expect(titleInput).toHaveAttribute('id', 'doc-title');
   });
 
   // T29 — Form label accessibility: Workspace
@@ -641,9 +641,9 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    const workspaceSelect = screen.getByLabelText(/Target Workspace/i);
+    const workspaceSelect = screen.getByLabelText(/^Workspace$/i);
     expect(workspaceSelect).toBeInTheDocument();
-    expect(workspaceSelect).toHaveAttribute('id', 'target-workspace');
+    expect(workspaceSelect).toHaveAttribute('id', 'doc-workspace');
   });
 
   // T30 — Login demo accounts hint presence
