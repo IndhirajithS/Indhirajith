@@ -663,4 +663,96 @@ describe('Frontend Verification Test Suite', () => {
     expect(screen.getByText(/creator_user/i)).toBeInTheDocument();
     expect(screen.getByText(/reviewer_user/i)).toBeInTheDocument();
   });
+
+  // Supplementary test: T6 role permission checks (CONTENT_CREATOR, PROJECT_DIRECTOR, GUEST_OBSERVER)
+  test('T6 — Role permission checks: CONTENT_CREATOR, PROJECT_DIRECTOR, GUEST_OBSERVER', () => {
+    // CONTENT_CREATOR should see New Document button
+    const creatorStore = createTestStore({
+      auth: { isAuthenticated: true, user: { role: 'CONTENT_CREATOR' }, role: 'CONTENT_CREATOR' },
+    });
+    const { unmount: unmount1 } = render(
+      <Provider store={creatorStore}>
+        <MemoryRouter>
+          <DocumentList />
+        </MemoryRouter>
+      </Provider>
+    );
+    expect(screen.getByRole('button', { name: /\+ New Document/i })).toBeInTheDocument();
+    unmount1();
+
+    // PROJECT_DIRECTOR should see New Document button
+    const directorStore = createTestStore({
+      auth: { isAuthenticated: true, user: { role: 'PROJECT_DIRECTOR' }, role: 'PROJECT_DIRECTOR' },
+    });
+    const { unmount: unmount2 } = render(
+      <Provider store={directorStore}>
+        <MemoryRouter>
+          <DocumentList />
+        </MemoryRouter>
+      </Provider>
+    );
+    expect(screen.getByRole('button', { name: /\+ New Document/i })).toBeInTheDocument();
+    unmount2();
+
+    // GUEST_OBSERVER should NOT see New Document button
+    const guestStore = createTestStore({
+      auth: { isAuthenticated: true, user: { role: 'GUEST_OBSERVER' }, role: 'GUEST_OBSERVER' },
+    });
+    render(
+      <Provider store={guestStore}>
+        <MemoryRouter>
+          <DocumentList />
+        </MemoryRouter>
+      </Provider>
+    );
+    expect(screen.queryByRole('button', { name: /New Document/i })).not.toBeInTheDocument();
+  });
+
+  // Supplementary test: T9 dismissal on form submit success & isEditing conditional workspace
+  test('T9 & isEditing — Modal dismissal on successful submit and workspace hidden on edit', async () => {
+    const handleClose = jest.fn();
+    const testStore = createTestStore({
+      workspace: { workspaces: [{ id: 1, name: 'Workspace 1' }] },
+    });
+
+    // Test creating (isEditing = false): workspace select should be present
+    const { unmount } = render(
+      <Provider store={testStore}>
+        <MemoryRouter>
+          <DocumentForm
+            workspaces={[{ id: 1, name: 'Workspace 1' }]}
+            onClose={handleClose}
+            isEditing={false}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+    expect(screen.getByLabelText(/^Workspace$/i)).toBeInTheDocument();
+
+    // Fill title and submit
+    const titleInput = screen.getByLabelText(/^Title$/i);
+    fireEvent.change(titleInput, { target: { value: 'Created Document' } });
+    const submitBtn = screen.getByRole('button', { name: /Submit/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(handleClose).toHaveBeenCalled();
+    });
+    unmount();
+
+    // Test editing (isEditing = true): workspace select should NOT be present
+    render(
+      <Provider store={testStore}>
+        <MemoryRouter>
+          <DocumentForm
+            workspaces={[{ id: 1, name: 'Workspace 1' }]}
+            initialValues={{ id: 42, title: 'Existing Document' }}
+            isEditing={true}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+    expect(screen.queryByLabelText(/^Workspace$/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^Title$/i)).toBeInTheDocument();
+  });
 });

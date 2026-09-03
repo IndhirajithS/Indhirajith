@@ -20,13 +20,23 @@ export const documentService = {
   },
 
   create: async (data) => {
-    const response = await api.post('/documents', data);
-    return response.data;
+    try {
+      const response = await axios.post('/api/documents', data);
+      return response.data;
+    } catch (e) {
+      const response = await api.post('/documents', data);
+      return response.data;
+    }
   },
 
   update: async (id, data) => {
-    const response = await api.put(`/documents/${id}`, data);
-    return response.data;
+    try {
+      const response = await axios.put(`/api/documents/${id}`, data);
+      return response.data;
+    } catch (e) {
+      const response = await api.put(`/documents/${id}`, data);
+      return response.data;
+    }
   },
 
   delete: async (id) => {
