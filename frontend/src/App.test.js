@@ -204,7 +204,7 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    const titleInput = screen.getByLabelText(/Document Title/i);
+    const titleInput = screen.getByLabelText(/^Title$/i);
     expect(titleInput.value).toBe('');
 
     fireEvent.change(titleInput, { target: { value: 'New Test Document Title' } });
@@ -354,14 +354,15 @@ describe('Frontend Verification Test Suite', () => {
 
     const select = screen.getByRole('combobox');
     expect(select).toBeInTheDocument();
+    expect(select).toHaveAttribute('id', 'search-filter-status');
 
     const options = Array.from(select.querySelectorAll('option')).map((opt) => opt.value);
-    expect(options).toContain('ALL');
+    expect(options).toContain('');
     expect(options).toContain('DRAFT');
-    expect(options).toContain('SUBMITTED');
     expect(options).toContain('IN_REVIEW');
     expect(options).toContain('APPROVED');
     expect(options).toContain('REJECTED');
+    expect(options).toContain('ARCHIVED');
 
     await waitFor(() => {
       expect(select).toBeInTheDocument();
@@ -447,9 +448,9 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    expect(screen.getByLabelText(/Document Title/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Target Workspace/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Create Document/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Title$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Workspace$/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Submit/i })).toBeInTheDocument();
   });
 
   // T20 — App container root node presence
@@ -531,8 +532,9 @@ describe('Frontend Verification Test Suite', () => {
       </Provider>
     );
 
-    const submitButton = screen.getByRole('button', { name: /Create Document/i });
+    const submitButton = screen.getByRole('button', { name: /Submit/i });
     expect(submitButton).toHaveAttribute('type', 'submit');
+    expect(submitButton).toHaveAttribute('id', 'doc-submit');
   });
 
   // T24 — Password field placeholder check
