@@ -1,9 +1,9 @@
 import axios from 'axios';
 
 let rawBaseUrl = (
-  process.env.REACT_APP_API_URL ||
   process.env.REACT_APP_API_BASE_URL ||
-  'http://localhost:8080'
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'test' ? 'http://localhost:8080' : '')
 ).trim();
 
 // Strip trailing slashes
