@@ -17,19 +17,22 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Safe check to avoid duplicate key or unique constraint exceptions on restart
-        if (!userRepository.existsByUsername("director")) {
-            
-            SystemUser director = SystemUser.builder()
-                    .username("director")
-                    .email("director@draftdash.com")
-                    // Note: double check if your entity uses .password() or .passwordHash()
-                    .passwordHash(passwordEncoder.encode("password123")) 
-                    .role(UserRole.PROJECT_DIRECTOR)
+        seedUserIfNotExists("director", "director@draftdash.com", "password123", UserRole.PROJECT_DIRECTOR);
+        seedUserIfNotExists("director_user", "director_user@draftdash.com", "password123", UserRole.PROJECT_DIRECTOR);
+        seedUserIfNotExists("creator_user", "creator_user@draftdash.com", "password123", UserRole.CONTENT_CREATOR);
+        seedUserIfNotExists("reviewer_user", "reviewer_user@draftdash.com", "password123", UserRole.QUALITY_REVIEWER);
+    }
+
+    private void seedUserIfNotExists(String username, String email, String password, UserRole role) {
+        if (!userRepository.existsByUsername(username)) {
+            SystemUser user = SystemUser.builder()
+                    .username(username)
+                    .email(email)
+                    .passwordHash(passwordEncoder.encode(password))
+                    .role(role)
                     .isActive(true)
                     .build();
-                    
-            userRepository.save(director);
+            userRepository.save(user);
         }
     }
 }
