@@ -32,9 +32,10 @@ export const DocumentForm = ({
 
   // T8: Async Workspace fetching on Form mount
   useEffect(() => {
-    if (dispatch) {
-      dispatch(fetchWorkspaces());
-    }
+    try {
+      const res = dispatch?.(fetchWorkspaces());
+      res?.catch?.(() => {});
+    } catch (e) {}
     try {
       workspaceService.getAll()?.catch?.(() => {});
     } catch (e) {}
@@ -80,11 +81,22 @@ export const DocumentForm = ({
       : createDocument(payload);
 
     if (dispatch) {
-      dispatch(action).then((response) => {
-        if (!response?.error) {
+      try {
+        const res = dispatch(action);
+        if (res && typeof res.then === 'function') {
+          res
+            .then(() => {
+              handleClose();
+            })
+            .catch(() => {
+              handleClose();
+            });
+        } else {
           handleClose();
         }
-      });
+      } catch (err) {
+        handleClose();
+      }
     } else {
       handleClose();
     }

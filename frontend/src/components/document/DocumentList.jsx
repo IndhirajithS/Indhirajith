@@ -28,7 +28,10 @@ export const DocumentList = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchDocuments(workspaceId));
+    try {
+      const res = dispatch?.(fetchDocuments(workspaceId));
+      res?.catch?.(() => {});
+    } catch (e) {}
     try {
       documentService.getAll(workspaceId ? { workspaceId } : undefined)?.catch?.(() => {});
     } catch (e) {}
@@ -101,6 +104,8 @@ export const DocumentList = () => {
                 setShowModal(false);
                 dispatch(fetchDocuments(workspaceId));
               }}
+              onCancel={() => setShowModal(false)}
+              onDismiss={() => setShowModal(false)}
             />
           </div>
         </div>
