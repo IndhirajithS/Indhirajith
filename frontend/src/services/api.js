@@ -1,9 +1,20 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+let rawBaseUrl = (
+  process.env.REACT_APP_API_URL ||
+  process.env.REACT_APP_API_BASE_URL ||
+  'http://localhost:8080'
+).trim();
+
+// Strip trailing slashes
+rawBaseUrl = rawBaseUrl.replace(/\/+$/, '');
+// If rawBaseUrl ends with /api, remove it so baseURL is just host/prefix and doesn't duplicate /api
+if (rawBaseUrl.endsWith('/api')) {
+  rawBaseUrl = rawBaseUrl.slice(0, -4);
+}
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: rawBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
