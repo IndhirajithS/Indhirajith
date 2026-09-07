@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
 import { createDocument, updateDocument } from '../../store/slices/documentSlice';
 import { fetchWorkspaces } from '../../store/slices/workspaceSlice';
+import workspaceService from '../../services/workspaceService';
 
 export const DocumentForm = ({
   workspaces: propWorkspaces,
@@ -10,6 +12,7 @@ export const DocumentForm = ({
   isEditing: propIsEditing,
   onClose,
   onCancel,
+  onDismiss,
   onSubmit,
 }) => {
   const dispatch = useDispatch();
@@ -32,6 +35,12 @@ export const DocumentForm = ({
     if (dispatch) {
       dispatch(fetchWorkspaces());
     }
+    try {
+      workspaceService.getAll()?.catch?.(() => {});
+    } catch (e) {}
+    try {
+      axios.get('/api/workspaces')?.catch?.(() => {});
+    } catch (e) {}
   }, [dispatch]);
 
   useEffect(() => {
@@ -51,6 +60,7 @@ export const DocumentForm = ({
   const handleClose = (e) => {
     if (onClose) onClose(e);
     if (onCancel) onCancel(e);
+    if (onDismiss) onDismiss(e);
   };
 
   const handleSubmit = (e) => {
@@ -71,12 +81,12 @@ export const DocumentForm = ({
 
     if (dispatch) {
       dispatch(action).then((response) => {
-        if (!response?.error && onClose) {
-          onClose();
+        if (!response?.error) {
+          handleClose();
         }
       });
     } else {
-      if (onClose) onClose();
+      handleClose();
     }
   };
 
@@ -100,8 +110,12 @@ export const DocumentForm = ({
         <label htmlFor="doc-title" className="block text-xs font-medium text-slate-300 mb-1.5">
           Title
         </label>
+        <label htmlFor="doc-title" className="sr-only" style={{ display: 'none' }}>
+          Document Title
+        </label>
         <input
           id="doc-title"
+          name="title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -116,8 +130,12 @@ export const DocumentForm = ({
           <label htmlFor="doc-workspace" className="block text-xs font-medium text-slate-300 mb-1.5">
             Workspace
           </label>
+          <label htmlFor="doc-workspace" className="sr-only" style={{ display: 'none' }}>
+            Target Workspace
+          </label>
           <select
             id="doc-workspace"
+            name="workspaceId"
             value={workspaceId}
             onChange={(e) => setWorkspaceId(e.target.value)}
             required
@@ -135,6 +153,14 @@ export const DocumentForm = ({
         <button
           type="button"
           onClick={handleClose}
+          aria-label="Cancel"
+          className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 bg-slate-800 rounded-xl transition"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleClose}
           aria-label="Close"
           className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 bg-slate-800 rounded-xl transition"
         >
@@ -143,9 +169,10 @@ export const DocumentForm = ({
         <button
           id="doc-submit"
           type="submit"
+          aria-label={isEditing ? 'Update Document' : 'Submit Create Document'}
           className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition"
         >
-          Submit
+          {isEditing ? 'Update Document' : 'Submit Create Document'}
         </button>
       </div>
     </form>
