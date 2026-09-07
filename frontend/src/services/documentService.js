@@ -3,13 +3,13 @@ import api from './api';
 
 export const documentService = {
   getAll: async (params) => {
+    const hasParams = params && (typeof params !== 'object' || Object.keys(params).length > 0);
+    const config = hasParams ? { params: typeof params === 'object' ? params : { workspaceId: params } } : undefined;
     try {
-      const config = params ? { params: typeof params === 'object' ? params : { workspaceId: params } } : {};
-      const response = await axios.get('/api/documents', config);
+      const response = config ? await axios.get('/api/documents', config) : await axios.get('/api/documents');
       return response.data;
     } catch (e) {
-      const config = params ? { params: typeof params === 'object' ? params : { workspaceId: params } } : {};
-      const response = await api.get('/documents', config);
+      const response = config ? await api.get('/documents', config) : await api.get('/documents');
       return response.data;
     }
   },
