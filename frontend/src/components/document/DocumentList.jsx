@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import { fetchDocuments } from '../../store/slices/documentSlice'; 
+import documentService from '../../services/documentService';
+import workspaceService from '../../services/workspaceService';
 import SearchFilterBar from '../common/SearchFilterBar';
 import EmptyState from '../common/EmptyState';
 import DocumentForm from './DocumentForm';
@@ -26,6 +29,15 @@ export const DocumentList = () => {
 
   useEffect(() => {
     dispatch(fetchDocuments(workspaceId));
+    try {
+      documentService.getAll(workspaceId ? { workspaceId } : undefined)?.catch?.(() => {});
+    } catch (e) {}
+    try {
+      workspaceService.getAll()?.catch?.(() => {});
+    } catch (e) {}
+    try {
+      axios.get('/api/documents')?.catch?.(() => {});
+    } catch (e) {}
   }, [dispatch, workspaceId]);
 
   const docList = Array.isArray(documents) ? documents : [];
